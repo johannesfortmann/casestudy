@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r, message=FALSE}
 # Installation and loading of the "install.load" package if necessary 
-# Note: The "install.load" package includes the install_load function
+# Note: The "install.load" package includes the install_load function 
 if(!require(install.load)){
   install.packages("install.load")
   library(install.load)
