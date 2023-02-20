@@ -1,0 +1,84 @@
+---
+title: "Case_Study_Group_32"
+author: "Johannes Pascal Falkhofen, Johannes Fortmann, Felix Remien, Georg Viktor von Usedom, Lennart Rathje"
+date: "2023-02-17"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Task
+
+## 2 Library 
+
+```{r, message=FALSE}
+# Installation and loading of the "install.load" package if necessary 
+# Note: The "install.load" package includes the install_load function
+if(!require(install.load)){
+  install.packages("install.load")
+  library(install.load)
+}
+
+# Installation and loading of the stated packages if necessary   
+install_load("dplyr", "readr")
+```
+
+## 3 Data Import 
+
+```{r, echo=FALSE}
+# OEM locations 
+# OEM1 Plants: 011, 012
+# OME2 Plants: 021, 022
+# 013 ?
+oem_locations <- read.table("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv", header = TRUE, sep = ";", fileEncoding = "CP1252")
+# Note: text encoding was changed to "CP1252" due to the "ä" contained in "Längengrad"
+
+# Vehicles type 11
+# Produced at plant 11 and plant 12
+# Includes if vehicle is defect 
+vehicle_type11 <- read.table("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv", header = TRUE, sep = ",")
+
+# Vehicles type 12
+# Produced at plant 12
+# Includes if vehicle is defect 
+vehicle_type12 <- read.table("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv", header = TRUE, sep = ";")
+```
+
+Uncessary: 
+
+```{r, echo=FALSE}
+# Tier 1 locations
+# Unnecessary 
+#tier1_locations <- read.table("Data/Geodaten/Tier1_Werke_2017-07-11_v1.2_TrR.csv", header = TRUE, sep = ";", fileEncoding = "CP1252")
+
+# Tier 2 locations
+# Unnecessary 
+#tier2_locations <- read.table("Data/Geodaten/Tier2_Werke_2017-07-11_v1.2_TrR.csv", header = TRUE, sep = ";", fileEncoding = "CP1252")
+
+# Vehicles type 11 - Error analysis
+# Unnecessary 
+#vehicle_type11_error_analysis <- read.table("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv", header = TRUE, sep = ",")
+
+# Components of the vehicles 
+#components_type11 <- read.table("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", header = TRUE, sep = ";")
+
+# Individual components
+#component_K1BE1 <- read.table("Data/Komponente/Komponente_K1BE1.csv", header = TRUE, sep = ",")
+
+# Admissions
+#admissions <- read.table("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv", header = TRUE, sep = ";")
+```
+
+## 4 Data Preparation
+
+## 5 Creation of the Final Dataset
+
+## 6 Evaluation
+
+## Results
