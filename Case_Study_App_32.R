@@ -1,51 +1,79 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
 
-library(shiny)
+# Installing all required packages
+if(!require("install.load")){
+  install.packages("install.load")
+}
+library(install.load)
 
-# Define UI for application that draws a histogram
+## noch durch die benötigten Pakete zu ersetzen
+install_load("shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets") 
+
+
+
+# Define UI for application
 ui <- fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
+  
+  # Application title
+  titlePanel("Produktionsvolumina und Feldausfälle"),
+  
+  
+  # Sidebar with a slider input for number of bins 
+  sidebarLayout(
+    sidebarPanel(
+      
+      ##INPUT HERE
+      dateInput("zensierungsdatum", "Zensierungsdatum der Analyse" ),
+      dateRangeInput("produktionszeitraum", "Produktionszeitraum der Fahrzeuge"),
+      
+      ## hierfür fehlen noch die zugrundeliegenden Daten
+      checkboxGroupInput("fahrzeugtyp_auswahl", "Auswahl an betrachteten Fahrzeugtypen", choices = list("a","b","c"))
+    ),
+    
+    # Show a plot of the generated distribution
+    mainPanel(
+      
+      
+      ##OUTPUT HERE
+      tabsetPanel(
+        tabPanel("Karte",
+                 leafletOutput("map")),
+        tabPanel("Plot",   
+                 plotOutput("plot")),
+        tabPanel("Tabelle",
+                 tableOutput("table"))
+      )
     )
+  )
+  
 )
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output) {
-
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
-    })
+  
+  
+  
+  ## hier Karte einfügen (nur Platzhalter) 
+  output$map <- renderLeaflet({
+    leaflet()
+  })
+  
+  
+  
+  ## hier Plot einfügen (nur Platzhalter)
+  output$plot <- renderPlot({
+    ggplot()
+  })
+  
+  
+  ## hier Tabelle einfügen (nur Platzhalter)
+  output$table <- renderTable({
+    
+  })
+  
+  
+  
 }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
