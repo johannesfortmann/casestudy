@@ -11,7 +11,7 @@ install_load("shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes",
 
 
 # Define UI for application
-ui <- fluidPage(
+ui <- fluidPage(style = "background-color: Lightsteelblue",
   
   # Application title
   titlePanel("Produktionsvolumina und Feldausfälle"),
