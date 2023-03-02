@@ -12,6 +12,9 @@ install_load("shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes",
 
 # Define UI for application
 ui <- fluidPage(style = "background-color: Lightsteelblue",
+   
+  # load the font awesome library (necessary for the checkbox group)
+  tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")),             
   
   # Application title
   titlePanel("Produktionsvolumina und Feldausfälle"),
@@ -25,8 +28,22 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
       dateInput("zensierungsdatum", "Zensierungsdatum der Analyse" ),
       dateRangeInput("produktionszeitraum", "Produktionszeitraum der Fahrzeuge"),
       
+      
+      
       ## hierfür fehlen noch die zugrundeliegenden Daten
-      checkboxGroupInput("fahrzeugtyp_auswahl", "Auswahl an betrachteten Fahrzeugtypen", choices = list("a","b","c"))
+      # create the checkbox group for the car selection
+      checkboxGroupButtons(
+        
+        
+        inputId = "fahrzeugtyp_auswahl",
+        label = "Auswahl an betrachteten Fahrzeugtypen",
+        choices = c("Option 1", "Option 2", "Option 3", "Option 4"),
+        individual = TRUE,
+        checkIcon = list(
+          yes = tags$i(class = "fa fa-circle", style = "color: Lightsteelblue"),
+          no = tags$i(class = "fa fa-circle-o", style = "color: Lightsteelblue")
+        )
+      )
     ),
     
     # Show a plot of the generated distribution
