@@ -182,7 +182,7 @@ häufigkeit
 
 
 ```{r}
-fehleranalyse <- read.csv("Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv")
+fehleranalyse <- read.csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv")
 
 ```
 Die eigentliche ID wird aus 
