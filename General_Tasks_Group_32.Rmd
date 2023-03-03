@@ -11,8 +11,96 @@ output:
 
 
 ## Library
+```{r }
+if(!require("install.load")){
+  install.packages("install.load")
+}
+library(install.load)
+
+install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "purrr", "moments","tidyverse", "scales","nortest")
+```
 
 
+```{r }
+Komponente_K7 <- read.csv2("Data/Logistikverzug/Komponente_K7.csv")
+Logistikverzug_K7 <- read.csv("Data/Logistikverzug/Logistikverzug_K7.csv",sep=";")
+```
+
+Es fällt auf, dass sechs Komponenten fehlerhaft sind, dies spielt für den Arbeits-Datensatz jedoch keine Rolle, da diese trotzdem verschickt wurden und nur das für die zu bearbeitenden Aufgaben vorausgesetzt wird. Als Logistikverzug wird die Differenz zwischen Wareneingangsdatum und Versanddatum angenommen.Die Versanddaten sind nicht gegeben, allerdings geht  aus der Aufgabenstellung geht hervor, dass die Arbeiter einen Tag von Warenproduktion zu Warenversand an einem Werktag brauchen, bei Samstag brauchen sie zwei, da der Sonntag nur zur Produktion, aber nicht zum Versand genutzt wird. Um den echten Logistikverzug zu ermitteln, werden also zwei Tage bei einem Samstag und ein Tag bei allen anderen Tagen auf die Produktionsdaten addiert.
+
+Die nötigen Daten aus den Tabellen werden unter Angabe ihrer IDNummer zusammengefügt.
+
+```{r}
+Logistikverzug <- merge(x = Komponente_K7[,c("IDNummer", "Produktionsdatum")], y = Logistikverzug_K7[ , c("IDNummer","Wareneingang")], by = "IDNummer")
+
+```
+
+Das Datumsformat aus Logistikverzug_K7 wird ins gleiche Format umgewandelt wie jenes aus Komponente_K7.
+
+```{r}
+Logistikverzug$Wareneingang <- as.Date(strptime(Logistikverzug$Wareneingang, format = "%d.%m.%Y"), format = "%Y-%m-%a")
+
+```
+
+Es wird eine zusätzliche Spalte erzeugt mit den Wochentagen.
+
+```{r}
+Logistikverzug$Wochentag = weekdays(as.Date(Logistikverzug$Produktionsdatum))
+```
+
+Es wird ein Tag extra auf den Wareneingang für alle Samstage addiert.
+
+```{r}
+samstagZeilen <- which(Logistikverzug$Wochentag == "Samstag")
+Logistikverzug$Wareneingang[samstagZeilen] <- Logistikverzug$Wareneingang[samstagZeilen] +1
+
+```
+
+
+Nun wird für alle Differenzen zwischen Wareneingang und Produktionsdatum die Differenz um 1 vermindert. Somit werden für die Samstage nun zwei Tage berücksichtigt und für alle anderen Tage einer. 
+
+```{r}
+Logistikverzug$AdjustierterVerzug<-as.integer( as.Date(Logistikverzug$Wareneingang) - as.Date(Logistikverzug$Produktionsdatum)-1) 
+```
+
+```{r}
+#hier werden noch Sachen removed
+#rm(IDNummer)
+```
+
+Um den Logistikverzug darstellen zu können, wird zunächst ein statistischer Test durchgeführt, hier: Anderson-Darling-Test, der auch große Stichprobengrößen auf Normalverteilung prüfen kann.
+
+```{r}
+# Variable auswählen
+var <- Logistikverzug$AdjustierterVerzug
+n <- length(var)
+n
+# Shapiro-Wilk-Test durchführen
+#shapiro.test( Logistikverzug$AdjustierterVerzug)
+
+
+ad.test(var)
+```
+
+Die Ausgabe des Anderson-Darling-Tests für die Variable "AdjustierterVerzug" gibt an, dass die Variable nicht normalverteilt ist. Das bedeutet, dass die Verteilung der Variable nicht der Normalverteilung entspricht. Der Test hat einen sehr kleinen p-Wert von weniger als 2,2e-16, was darauf hindeutet, dass die Nullhypothese der Normalverteilung abgelehnt werden sollte.
+
+Durch die Verteilung der Daten ergibt sich, dass ein Boxplot ist eine nützliche Möglichkeit, um die Verteilung zu visualisieren, wenn die Variable nicht normalverteilt ist.
+
+```{r}
+boxplot(var, col = "blue", main = "Verteilung der Variable")
+```
+Da keine Normalverteilung vorliegt, wird nun auf Schiefe geprüft.
+```{r}
+skewness(var)
+```
+Eine Schiefe von 0,55 weist darauf hin, dass die Verteilung leicht rechtsschief (rechtssteil) ist, da die Schiefe positiv ist.
+
+So eine Verteilung lässt sich sehr gut mit einem Densityplot darstellen, da man die Schiefe dort gut erkennen kann.
+```{r}
+# Dichteplot erstellen
+densityplot <- density(var)
+plot(densityplot, main = "Verteilung des Logistikverzuges",ylab = "Dichte")
+```
 ## Task 1
 
 ### Subtask a
@@ -20,15 +108,158 @@ output:
 
 
 ### Subtask b
+Aufgabe b) Der minimale Verzug und der maximaler Verzug werden bestimmt.
+
+```{r}
+min(Logistikverzug$AdjustierterVerzug)
+```
+Der Minimalwert beträgt damit 1.
+```{r}
+max(Logistikverzug$AdjustierterVerzug)
+```
+Der Minimalwert beträgt damit 12.
+
 
 ### Subtask c
+Der Mittelwert ist zu bestimmten und Alternativen dazu zu benennen.
+```{r}
+mean(Logistikverzug$AdjustierterVerzug)
+```
+Der Mittelwert beträgt damit 4.223554 Tage.
 
+
+```{r}
+#hist(Logistikverzug$AdjustierterVerzug, breaks=10, main="Logistikverzug Histogramm", xlab="Logistikverzug (Tage)")
+#y-Achse umbennen
+# Histogramm erstellen und y-Achse umbenennen
+#hist(Logistikverzug$AdjustierterVerzug, breaks=10, main="Logistikverzug Histogramm", xlab="Logistikverzug (Tage)", ylab="Häufigkeit")
+
+```
 ### Subtask d
+Für die schiefe Verteilung eignet sich ebenfalls ein Histogramm sehr gut, hier mit Plotly realisiert.
+```{r}
+# Histogramm erstellen
+p <- plot_ly(Logistikverzug, x = ~AdjustierterVerzug, type = "histogram", nbinsx = 10)
+
+# Layout anpassen
+p <- p %>% layout(title = "Logistikverzug Histogramm", xaxis = list(title = "Logistikverzug (Tage)"), yaxis = list(title = "Häufigkeit"))
+
+# Histogramm anzeigen
+p
+```
 
 ## Task 2
+Datenintegrität: Eine relationale Datenbank bietet die Möglichkeit, Integritätsregeln wie z.B. Fremdschlüsselbeziehungen oder eindeutige Schlüssel festzulegen, um sicherzustellen, dass die Daten konsistent sind und nicht widersprüchlich. Dies kann Fehler bei der Dateneingabe und Probleme bei der Datenanalyse vermeiden.
 
+Skalierbarkeit: Eine relationale Datenbank kann einfach erweitert werden, indem neue Tabellen hinzugefügt oder bestehende Tabellen erweitert werden. Dadurch können neue Datensätze einfach hinzugefügt werden, ohne dass die gesamte Datenbankstruktur geändert werden muss.
+
+Datenabfragen: Eine relationale Datenbank ermöglicht komplexe Datenabfragen, um spezifische Daten zu finden und zu analysieren. Durch die Verwendung von SQL-Abfragen können Daten leicht gefiltert, sortiert und gruppiert werden, um schnell Informationen zu finden und Trends zu identifizieren.
+
+Datensicherheit: Eine relationale Datenbank bietet mehrere Funktionen, um Daten zu schützen, z.B. die Möglichkeit, Zugriffsrechte auf Tabellen und Spalten zu beschränken. Dies kann sicherstellen, dass sensible Daten nur von autorisierten Personen eingesehen und bearbeitet werden können, um Datenschutz und Compliance-Anforderungen zu erfüllen.
 ## Task 3
+```{r}
+Zulassungen_aller_Fahrzeuge <- read_csv2("./Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
+types = sapply(Zulassungen_aller_Fahrzeuge, typeof)
+attributes = names(Zulassungen_aller_Fahrzeuge)
+datatypes = data.frame(attributes, types)
+colnames(datatypes) <- c("Attribut", "Datentyp")
+kable(datatypes, row.names = FALSE, caption="Attribute der Datentypen", format="simple")
+```
 
+
+
+
+```{r}
+analyse <- read_csv("Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv") 
+```
+```{r}
+häufigkeit <- table(analyse$Fehlerhaft_Fahrleistung)
+häufigkeit
+```
 ## Task 4
 
 
+```{r}
+fehleranalyse <- read.csv("Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv")
+
+```
+Die eigentliche ID wird aus 
+```{r}
+fehleranalyse <- fehleranalyse %>% mutate(ID = as.numeric(substr(ID_Fahrzeug, 9, nchar(ID_Fahrzeug))))
+```
+kleineren Datensatz erstellen, da sonst Überlastung
+```{r}
+fehleranalyse_20P <- fehleranalyse[sample(x = nrow(fehleranalyse), size = nrow(fehleranalyse) / 5, replace = FALSE), ]
+```
+
+
+Um ein Modell erstellen zu können, müssen die Werte, die engine annehmen kann, in numerische Werte umgewandelt werden (sie werden Dummyvariablen zugeordnet).
+```{r}
+fehleranalyse$engine <- ifelse(fehleranalyse$engine == "small", 0, 
+                    ifelse(fehleranalyse$engine == "medium", 1, 2))
+```
+
+```{r}
+#fehleranalyse$Spalte1<- as.numeric(as.character(fehleranalyse$Spalte1))
+#fehleranalyse_20P$Spalte1 <- floor(fehleranalyse_20P$Spalte1 / 10000)
+
+
+```
+###
+Fehlerhaft_Fahrleistung wird auf die anderen gemünzt. Die Datumsangaben werden dabei nicht berücksichtigt, eine zeitliche Einordung wird anhand der ID-Nummer gemacht; je höher die ID, desto später produziert.Die Herstellernummer wird weggelassen, da nur ein Hersteller (Hersteller 1) im Datens dazu existiert. Es bleiben die ID_Fahrzeug (umgewandelt zur ID), days, fuel und engine (mit Dummyvariablen) und X1.
+
+```{r}
+lm_fahrleistung <- lm(Fehlerhaft_Fahrleistung ~ engine + Werksnummer + fuel + days, data = fehleranalyse_20P )
+
+```
+```{r}
+summary(lm_fahrleistung)
+```
+
+```{r}
+lm_fahrleistung1 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + days + ID
+                       + Werksnummer + Herstellernummer, data = fehleranalyse )
+
+```
+
+```{r}
+summary(lm_fahrleistung1)
+```
+###
+Die Residuen (Min, 1Q, Median, 3Q, Max) sowie der residual standard error und die Freiheitsgrade können als sinnvoll betrachtet werden, da sie Informationen über die Verteilung der Abweichungen zwischen den tatsächlichen Beobachtungen und den Vorhersagen des Modells geben.
+
+Die Koeffizientenschätzer und die zugehörigen Standardfehler sowie die t-Werte und die p-Werte sind ebenfalls sinnvoll, da sie Informationen darüber liefern, wie stark und signifikant die einzelnen Prädiktoren die abhängige Variable beeinflussen.
+
+Die Variable "Herstellernummer" kann jedoch weggelassen werden, da sie keine Variabilität in der abhängigen Variable erklären kann und deshalb fehlende Werte (NA) aufweist. Das Modell könnte auch daraufhin überprüft werden, ob "days" sinnvoll ist, da der p-Wert hoch ist und darauf hinweist, dass der Effekt nicht signifikant ist.
+
+###
+```{r}
+lm_fahrleistung2 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + days + ID + X1, data = fehleranalyse )
+
+```
+
+```{r}
+summary(lm_fahrleistung2)
+```
+
+Das erste Koeffizientenpaar ("Intercept" und "engine") zeigt, dass der geschätzte y-Achsenabschnitt (Intercept) bei 20.860 liegt, während der geschätzte Koeffizient für die unabhängige Variable engine -4.713 ist. Dies deutet darauf hin, dass, wenn alle anderen unabhängigen Variablen konstant bleiben, ein Anstieg der engine um eine Einheit zu einem Rückgang von 4.713 in der abhängigen Variablen führen würde. Beide Koeffizienten sind statistisch signifikant (p-Werte <0,05), was bedeutet, dass wir mit hoher Wahrscheinlichkeit annehmen können, dass sie nicht null sind.
+
+Das zweite Koeffizientenpaar ("fuel") zeigt einen geschätzten Koeffizienten von 5.252 für die unabhängige Variable fuel. Dies bedeutet, dass, wenn alle anderen unabhängigen Variablen konstant bleiben, eine Erhöhung von einer Einheit in der unabhängigen Variable fuel eine Erhöhung von 5.252 in der abhängigen Variablen bewirkt. Auch dieser Koeffizient ist statistisch signifikant.
+
+Der geschätzte Koeffizient für "days" ist -0.05681, was bedeutet, dass ein Anstieg von einer Einheit in der unabhängigen Variable days zu einer Abnahme von 0.05681 in der abhängigen Variablen führen würde. Der p-Wert für diesen Koeffizienten ist jedoch größer als 0,05, was darauf hindeutet, dass wir nicht mit Sicherheit sagen können, ob der Koeffizient signifikant ist.
+
+Der Koeffizient für "ID" ist -0.0004693, was darauf hindeutet, dass ein Anstieg von einer Einheit in der unabhängigen Variable ID eine Abnahme von 0.0004693 in der abhängigen Variablen bewirkt. Der p-Wert für diesen Koeffizienten ist kleiner als 0,05, was darauf hinweist, dass dieser Koeffizient statistisch signifikant ist.
+
+Schließlich ist der Koeffizient für "X1" mit einem geschätzten Wert von 0.0001488 positiv, aber nicht statistisch signifikant, da der p-Wert größer als 0,05 ist.
+
+Insgesamt scheinen die Variablen engine und fuel die stärksten Prädiktoren für die abhängige Variable zu sein, während days und X1 weniger wichtige Prädiktoren sind.
+
+```{r}
+lm_fahrleistung3 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + ID +engine*fuel+engine*ID+fuel*ID+engine*fuel*ID
+, data = fehleranalyse )
+
+```
+
+```{r}
+summary(lm_fahrleistung3)
+```
