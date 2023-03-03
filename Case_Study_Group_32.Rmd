@@ -17,68 +17,355 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 2 Library 
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning = FALSE}
 # Installation and loading of the "install.load" package if necessary 
-# Note: The "install.load" package includes the install_load function 
+# Note: The "install.load" package includes the install_load function
 if(!require(install.load)){
   install.packages("install.load")
   library(install.load)
 }
 
 # Installation and loading of the stated packages if necessary   
-install_load("dplyr", "readr")
+install_load("dplyr", "readr", "data.table",  "shiny")
 ```
 
 ## 3 Data Import 
 
-```{r, echo=FALSE}
+OEM1 location of plants
+
+```{r, message=FALSE, warning = FALSE}
 # OEM locations 
 # OEM1 Plants: 011, 012
 # OME2 Plants: 021, 022
-# 013 ?
-oem_locations <- read.table("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv", header = TRUE, sep = ";", fileEncoding = "CP1252")
-# Note: text encoding was changed to "CP1252" due to the "ä" contained in "Längengrad"
+# 013 --> Not relevant consultation hours 
 
+# Note: encoding was changed to "Latin-1" due to the "ä" contained in "Längengrad"
+oem_locations <- fread("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv", data.table = FALSE, encoding = "Latin-1")
+```
+
+Vehicles of OEM1 
+
+```{r, message=FALSE, warning = FALSE}
 # Vehicles type 11
 # Produced at plant 11 and plant 12
 # Includes if vehicle is defect 
-vehicle_type11 <- read.table("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv", header = TRUE, sep = ",")
+vehicle_type11 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv", header = TRUE, data.table = FALSE)
 
 # Vehicles type 12
 # Produced at plant 12
 # Includes if vehicle is defect 
-vehicle_type12 <- read.table("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv", header = TRUE, sep = ";")
+vehicle_type12 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv", header = TRUE, data.table = FALSE)
+
+#vehicle_type11 %>% filter(ID_Fahrzeug == "11-1-11-4")
 ```
 
-Uncessary: 
+Built in components
 
-```{r, echo=FALSE}
-# Tier 1 locations
-# Unnecessary 
-#tier1_locations <- read.table("Data/Geodaten/Tier1_Werke_2017-07-11_v1.2_TrR.csv", header = TRUE, sep = ";", fileEncoding = "CP1252")
+```{r, message=FALSE, warning = FALSE}
+# Components within type 11
+components_in_vehicle_type11 <- fread("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", header = TRUE, data.table = FALSE)
 
-# Tier 2 locations
-# Unnecessary 
-#tier2_locations <- read.table("Data/Geodaten/Tier2_Werke_2017-07-11_v1.2_TrR.csv", header = TRUE, sep = ";", fileEncoding = "CP1252")
+# Adding columns for the types of components built in 
+# Body_component_type
+components_in_vehicle_type11 <- components_in_vehicle_type11 %>% mutate(Body_component_type = substring(components_in_vehicle_type11$ID_Karosserie, 0, regexpr("-", components_in_vehicle_type11$ID_Karosserie) -1), .after = ID_Karosserie)
+# Gearshift_component_type 
+components_in_vehicle_type11 <- components_in_vehicle_type11 %>% mutate(Gearshift_component_type = substring(components_in_vehicle_type11$ID_Schaltung, 0, regexpr("-", components_in_vehicle_type11$ID_Schaltung) -1), .after = ID_Schaltung)
+# Seats_component_type 
+components_in_vehicle_type11 <- components_in_vehicle_type11 %>% mutate(Seats_component_type = substring(components_in_vehicle_type11$ID_Sitze, 0, regexpr("-", components_in_vehicle_type11$ID_Sitze) -1), .after = ID_Sitze)
+# Engine_component_type
+components_in_vehicle_type11 <- components_in_vehicle_type11 %>% mutate(Engine_component_type = substring(components_in_vehicle_type11$ID_Motor, 0, regexpr("-", components_in_vehicle_type11$ID_Motor) -1), .after = ID_Motor)
 
-# Vehicles type 11 - Error analysis
-# Unnecessary 
-#vehicle_type11_error_analysis <- read.table("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv", header = TRUE, sep = ",")
+# Changing datatype of X_component_type to factor
+components_in_vehicle_type11$Body_component_type <- as.factor(components_in_vehicle_type11$Body_component_type)
+components_in_vehicle_type11$Gearshift_component_type <- as.factor(components_in_vehicle_type11$Gearshift_component_type)
+components_in_vehicle_type11$Seats_component_type <- as.factor(components_in_vehicle_type11$Seats_component_type)
+components_in_vehicle_type11$Engine_component_type <- as.factor(components_in_vehicle_type11$Engine_component_type)
 
-# Components of the vehicles 
-#components_type11 <- read.table("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", header = TRUE, sep = ";")
+# Identifying all components built in vehicle type 11 
+components_vehicle_type11 <- c(levels(components_in_vehicle_type11$Body_component_type), levels(components_in_vehicle_type11$Gearshift_component_type), levels(components_in_vehicle_type11$Seats_component_type), levels(components_in_vehicle_type11$Engine_component_type))
+# --> Component types built in: K4, K3AG1, K3SG1, K2LE1, K2ST1, K1BE1, K1DI1
 
-# Individual components
-#component_K1BE1 <- read.table("Data/Komponente/Komponente_K1BE1.csv", header = TRUE, sep = ",")
+# Components within type 12
+components_in_vehicle_type12 <- fread("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", header = TRUE, data.table = FALSE)
 
-# Admissions
-#admissions <- read.table("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv", header = TRUE, sep = ";")
+# Adding columns for the types of components built in 
+# Body_component_type
+components_in_vehicle_type12 <- components_in_vehicle_type12 %>% mutate(Body_component_type = substring(components_in_vehicle_type12$ID_Karosserie, 0, regexpr("-", components_in_vehicle_type12$ID_Karosserie) -1), .after = ID_Karosserie)
+# Gearshift_component_type 
+components_in_vehicle_type12 <- components_in_vehicle_type12 %>% mutate(Gearshift_component_type = substring(components_in_vehicle_type12$ID_Schaltung, 0, regexpr("-", components_in_vehicle_type12$ID_Schaltung) -1), .after = ID_Schaltung)
+# Seats_component_type 
+components_in_vehicle_type12 <- components_in_vehicle_type12 %>% mutate(Seats_component_type = substring(components_in_vehicle_type12$ID_Sitze, 0, regexpr("-", components_in_vehicle_type12$ID_Sitze) -1), .after = ID_Sitze)
+# Engine_component_type
+components_in_vehicle_type12 <- components_in_vehicle_type12 %>% mutate(Engine_component_type = substring(components_in_vehicle_type12$ID_Motor, 0, regexpr("-", components_in_vehicle_type12$ID_Motor) -1), .after = ID_Motor)
+
+# Changing datatype of X_component_type to factor
+components_in_vehicle_type12$Body_component_type <- as.factor(components_in_vehicle_type12$Body_component_type)
+components_in_vehicle_type12$Gearshift_component_type <- as.factor(components_in_vehicle_type12$Gearshift_component_type)
+components_in_vehicle_type12$Seats_component_type <- as.factor(components_in_vehicle_type12$Seats_component_type)
+components_in_vehicle_type12$Engine_component_type <- as.factor(components_in_vehicle_type12$Engine_component_type)
+
+# Identifying all components built in vehicle type 12
+components_vehicle_type12 <- c(levels(components_in_vehicle_type12$Body_component_type), levels(components_in_vehicle_type12$Gearshift_component_type), levels(components_in_vehicle_type12$Seats_component_type), levels(components_in_vehicle_type12$Engine_component_type))
+# --> Component types built in: K5, K3AG1, K3SG1, K2LE1, K2ST1, K1BE1, K1DI1
+
+# Components contained in vehicle type 11 and type 12 
+components <- c(components_vehicle_type11, components_vehicle_type12)
+components <- unique(components)
+# --> Component types required: K4, K3AG1, K3SG1, K2LE1, K2ST1, K1BE1, K1DI1, K5    
+components
+
+#components_in_vehicle_type11 %>% filter(ID_Motor == "K1BE1-101-1011-97")
+```
+
+Individual components 
+
+```{r, message=FALSE, warning = FALSE}
+# Data import of required components  
+# K4
+component_K4 <- fread("Data/Komponente/Komponente_K4.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K3AG1 
+component_K3AG1 <- fread("Data/Komponente/Komponente_K3AG1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K3SG1 
+component_K3SG1 <- fread("Data/Komponente/Komponente_K3SG1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K2LE1 --> TXT --> CHARACTER STRING --> DATAFRAME
+txt <- readLines("Data/Komponente/Komponente_K2LE1.txt")
+txt <- gsub("II",",",txt)
+txt <- gsub("\v","\n",txt)
+component_K2LE1 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+rm(txt)
+
+# K2ST1 --> TXT + No header
+component_K2ST1 <- fread("Data/Komponente/Komponente_K2ST1.txt", data.table = FALSE, nrows = 50)
+
+# K1BE1 
+component_K1BE1 <- fread("Data/Komponente/Komponente_K1BE1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K1DI1 
+component_K1DI1 <- fread("Data/Komponente/Komponente_K1DI1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K5
+component_K5 <- fread("Data/Komponente/Komponente_K5.csv", header = TRUE, data.table = FALSE, nrows = 50)
+```
+
+Parts in components 
+
+```{r, message=FALSE, warning = FALSE}
+# K4
+parts_in_component_K4 <- fread("Data/Komponente/Bestandteile_Komponente_K4.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K3AG1
+parts_in_component_K3AG1 <- fread("Data/Komponente/Bestandteile_Komponente_K3AG1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K3SG1
+parts_in_component_K3SG1 <- fread("Data/Komponente/Bestandteile_Komponente_K3SG1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K2LE1
+parts_in_component_K2LE1 <- fread("Data/Komponente/Bestandteile_Komponente_K2LE1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K2ST1
+parts_in_component_K2ST1 <- fread("Data/Komponente/Bestandteile_Komponente_K2ST1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K1BE1
+parts_in_component_K1BE1 <- fread("Data/Komponente/Bestandteile_Komponente_K1BE1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K1DI1
+parts_in_component_K1DI1 <- fread("Data/Komponente/Bestandteile_Komponente_K1DI1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# K5
+parts_in_component_K5 <- fread("Data/Komponente/Bestandteile_Komponente_K5.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+parts <- c()
+parts <- append(parts, colnames(parts_in_component_K4))
+parts <- append(parts, colnames(parts_in_component_K3AG1))
+parts <- append(parts, colnames(parts_in_component_K3SG1))
+parts <- append(parts, colnames(parts_in_component_K2LE1))
+parts <- append(parts, colnames(parts_in_component_K2ST1))
+parts <- append(parts, colnames(parts_in_component_K1BE1))
+parts <- append(parts, colnames(parts_in_component_K1DI1))
+parts <- append(parts, colnames(parts_in_component_K5))
+```
+
+Types of parts 
+
+```{r, message=FALSE, warning = FALSE}
+# Remove duplicates 
+parts <- unique(parts)
+
+# Remove entries which are not parts 
+parts <- parts[! parts %in% c("X1", "V1", "X", "K4")]
+parts <- gsub("ID_", "", parts)
+parts <- setdiff(parts, components) 
+sort(parts)
+```
+
+Individual parts 
+
+```{r, message=FALSE, warning = FALSE}
+# T1
+txt <- readLines("Data/Einzelteil/Einzelteil_T01.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub(" | | ",",",txt, fixed = TRUE)
+txt <- gsub(" ","\n",txt, fixed = TRUE)
+part_T01 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+rm(txt)
+
+# T2
+txt <- readLines("Data/Einzelteil/Einzelteil_T02.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub("  ",",",txt, fixed = TRUE)
+txt <- gsub("\t","\n",txt, fixed = TRUE)
+part_T02 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+rm(txt)
+
+# T3
+txt <- readLines("Data/Einzelteil/Einzelteil_T03.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub("|",",",txt, fixed = TRUE)
+txt <- gsub("\v","\n",txt, fixed = TRUE)
+part_T03 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+rm(txt)
+
+# T4
+part_T04 <- fread("Data/Einzelteil/Einzelteil_T04.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T5
+part_T05 <- fread("Data/Einzelteil/Einzelteil_T05.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T6 
+part_T06 <- fread("Data/Einzelteil/Einzelteil_T06.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T11
+txt <- readLines("Data/Einzelteil/Einzelteil_T11.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub("\t",",",txt, fixed = TRUE)
+txt <- gsub("\f","\n",txt, fixed = TRUE)
+part_T11 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+rm(txt)
+
+# T12
+part_T12 <- fread("Data/Einzelteil/Einzelteil_T12.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T13
+part_T13 <- fread("Data/Einzelteil/Einzelteil_T13.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T14
+part_T14 <- fread("Data/Einzelteil/Einzelteil_T14.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T15
+part_T15 <- fread("Data/Einzelteil/Einzelteil_T15.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T21
+part_T21 <- fread("Data/Einzelteil/Einzelteil_T21.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T22
+txt <- readLines("Data/Einzelteil/Einzelteil_T22.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub("\t\\",",",txt, fixed = FALSE)
+#txt <- gsub("\f","\n",txt, fixed = TRUE)
+#part_T11 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+#rm(txt)
+
+#txt <- gsub('(?<![0-9])\\',"",txt, fixed = TRUE)
+#txt <- gsub("\\",",",txt, fixed = TRUE)
+#'(?<!")/(?!")'
+#'\"'
+
+# T23
+part_T23 <- fread("Data/Einzelteil/Einzelteil_T23.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T24
+txt <- readLines("Data/Einzelteil/Einzelteil_T24.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub("  ",",",txt, fixed = TRUE)
+txt <- gsub("\f","\n",txt, fixed = TRUE)
+part_T24 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+rm(txt)
+
+# T25
+part_T25 <- fread("Data/Einzelteil/Einzelteil_T25.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T30
+part_T30 <- fread("Data/Einzelteil/Einzelteil_T30.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T31
+txt <- readLines("Data/Einzelteil/Einzelteil_T31.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub("  ",",",txt, fixed = TRUE)
+txt <- gsub("\b","\n",txt, fixed = TRUE)
+part_T31 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+rm(txt)
+
+# T32
+part_T32 <- fread("Data/Einzelteil/Einzelteil_T32.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+# T33
+part_T33 <- fread("Data/Einzelteil/Einzelteil_T33.csv", header = TRUE, data.table = FALSE, nrows = 50)
+
+#part_T04 %>% filter(ID_T04 == "4-204-2043-125")
 ```
 
 ## 4 Data Preparation
 
+Often times imported raw data is in an untidy and unstructured format which is unsuitable for further data analysis. 
+
+Generally data sets should fulfill the following three requirements in order to be in a *tidy* data format (slide 9)[1]: 
+
+1. Each variable has its own column. 
+2. Each observation has its own row. 
+3. Each observation value has its own cell. 
+
+Furthermore, attributes contributing to good data quality are without limitation (slide 7)[1]: 
+
+* Incomplete data 
+  + Do all required cells contain data? 
+  + Are empty cells meaningful or flawed? 
+* Inaccurate data 
+  + Are all variables in a suitable data format?
+* Inconsistent data 
+  +
+* Redundant data 
+  + 
+
+In chapter 4.1 the imported data is examined before it is cleaned in chapter 4.2. 
+
+### 4.1 Data Investigation 
+
+In order to get an broad overview of each data set the following functions are applied (slide 10)[1]: 
+
+* *glimpse()*: Shows each variable, its data type as well as several observations 
+* *summary()*: Provides an overview over the distribution of variables containing numbers 
+
+```{r, message=FALSE, warning = FALSE}
+glimpse(oem_locations)
+```
+
+```{r, message=FALSE, warning = FALSE}
+glimpse(vehicle_type11)
+```
+
+```{r, message=FALSE, warning = FALSE}
+glimpse(vehicle_type12)
+```
+
+### 4.2 Data Cleaning 
+
+```{r, message=FALSE, warning = FALSE}
+#oem_locations_test <- oem_locations_test %>% rename("Längengrad" = "L„ngengrad")
+```
+
 ## 5 Creation of the Final Dataset
+
+```{r, message=FALSE, warning = FALSE}
+
+```
 
 ## 6 Evaluation
 
-## Results
+## 7 Results
+
+## 8 Sources
+
+[1]	Fachgebiet Qualitätswissenschaft, “Skript: Tidy,” Berlin, Nov. 08, 2023. [Online]. Available: https://isis.tu-berlin.de/pluginfile.php/2444052/mod_resource/content/1/VL04_Tidy.pdf
