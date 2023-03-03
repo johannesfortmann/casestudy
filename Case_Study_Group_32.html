@@ -1450,23 +1450,17 @@ overflow-y: auto;
 border: 1px solid #ddd;
 border-radius: 4px;
 }
-.tabset-dropdown > .nav-tabs > li.active:before {
-content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+content: "\e259";
 font-family: 'Glyphicons Halflings';
 display: inline-block;
 padding: 10px;
 border-right: 1px solid #ddd;
 }
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-content: "";
-border: none;
-}
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-content: "";
+content: "\e258";
 font-family: 'Glyphicons Halflings';
-display: inline-block;
-padding: 10px;
-border-right: 1px solid #ddd;
+border: none;
 }
 .tabset-dropdown > .nav-tabs > li.active {
 display: block;
@@ -1592,10 +1586,19 @@ Remien, Georg Viktor von Usedom, Lennart Rathje</h4>
 </div>
 <div id="library" class="section level2">
 <h2>2 Library</h2>
-<pre class="r"><code>library(&quot;dplyr&quot;)</code></pre>
+<pre class="r"><code># Installation and loading of the &quot;install.load&quot; package if necessary 
+# Note: The &quot;install.load&quot; package includes the install_load function 
+if(!require(install.load)){
+  install.packages(&quot;install.load&quot;)
+  library(install.load)
+}
+
+# Installation and loading of the stated packages if necessary   
+install_load(&quot;dplyr&quot;, &quot;readr&quot;)</code></pre>
 </div>
 <div id="data-import" class="section level2">
 <h2>3 Data Import</h2>
+<p>Uncessary:</p>
 </div>
 <div id="data-preparation" class="section level2">
 <h2>4 Data Preparation</h2>
