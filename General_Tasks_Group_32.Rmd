@@ -170,7 +170,9 @@ kable(datatypes, row.names = FALSE, caption="Attribute der Datentypen", format="
 
 
 ```{r}
-analyse <- read_csv("Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv") 
+analyse <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv") 
+
+
 ```
 ```{r}
 häufigkeit <- table(analyse$Fehlerhaft_Fahrleistung)
