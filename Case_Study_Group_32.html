@@ -1587,21 +1587,349 @@ Remien, Georg Viktor von Usedom, Lennart Rathje</h4>
 <div id="library" class="section level2">
 <h2>2 Library</h2>
 <pre class="r"><code># Installation and loading of the &quot;install.load&quot; package if necessary 
-# Note: The &quot;install.load&quot; package includes the install_load function 
+# Note: The &quot;install.load&quot; package includes the install_load function
 if(!require(install.load)){
   install.packages(&quot;install.load&quot;)
   library(install.load)
 }
 
 # Installation and loading of the stated packages if necessary   
-install_load(&quot;dplyr&quot;, &quot;readr&quot;)</code></pre>
+install_load(&quot;dplyr&quot;, &quot;readr&quot;, &quot;data.table&quot;,  &quot;shiny&quot;)</code></pre>
 </div>
 <div id="data-import" class="section level2">
 <h2>3 Data Import</h2>
-<p>Uncessary:</p>
+<p>OEM1 location of plants</p>
+<pre class="r"><code># OEM locations 
+# OEM1 Plants: 011, 012
+# OME2 Plants: 021, 022
+# 013 --&gt; Not relevant consultation hours 
+
+# Note: encoding was changed to &quot;Latin-1&quot; due to the &quot;ä&quot; contained in &quot;Längengrad&quot;
+oem_locations &lt;- fread(&quot;Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv&quot;, data.table = FALSE, encoding = &quot;Latin-1&quot;)</code></pre>
+<p>Vehicles of OEM1</p>
+<pre class="r"><code># Vehicles type 11
+# Produced at plant 11 and plant 12
+# Includes if vehicle is defect 
+vehicle_type11 &lt;- fread(&quot;Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv&quot;, header = TRUE, data.table = FALSE)
+
+# Vehicles type 12
+# Produced at plant 12
+# Includes if vehicle is defect 
+vehicle_type12 &lt;- fread(&quot;Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv&quot;, header = TRUE, data.table = FALSE)
+
+#vehicle_type11 %&gt;% filter(ID_Fahrzeug == &quot;11-1-11-4&quot;)</code></pre>
+<p>Built in components</p>
+<pre class="r"><code># Components within type 11
+components_in_vehicle_type11 &lt;- fread(&quot;Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv&quot;, header = TRUE, data.table = FALSE)
+
+# Adding columns for the types of components built in 
+# Body_component_type
+components_in_vehicle_type11 &lt;- components_in_vehicle_type11 %&gt;% mutate(Body_component_type = substring(components_in_vehicle_type11$ID_Karosserie, 0, regexpr(&quot;-&quot;, components_in_vehicle_type11$ID_Karosserie) -1), .after = ID_Karosserie)
+# Gearshift_component_type 
+components_in_vehicle_type11 &lt;- components_in_vehicle_type11 %&gt;% mutate(Gearshift_component_type = substring(components_in_vehicle_type11$ID_Schaltung, 0, regexpr(&quot;-&quot;, components_in_vehicle_type11$ID_Schaltung) -1), .after = ID_Schaltung)
+# Seats_component_type 
+components_in_vehicle_type11 &lt;- components_in_vehicle_type11 %&gt;% mutate(Seats_component_type = substring(components_in_vehicle_type11$ID_Sitze, 0, regexpr(&quot;-&quot;, components_in_vehicle_type11$ID_Sitze) -1), .after = ID_Sitze)
+# Engine_component_type
+components_in_vehicle_type11 &lt;- components_in_vehicle_type11 %&gt;% mutate(Engine_component_type = substring(components_in_vehicle_type11$ID_Motor, 0, regexpr(&quot;-&quot;, components_in_vehicle_type11$ID_Motor) -1), .after = ID_Motor)
+
+# Changing datatype of X_component_type to factor
+components_in_vehicle_type11$Body_component_type &lt;- as.factor(components_in_vehicle_type11$Body_component_type)
+components_in_vehicle_type11$Gearshift_component_type &lt;- as.factor(components_in_vehicle_type11$Gearshift_component_type)
+components_in_vehicle_type11$Seats_component_type &lt;- as.factor(components_in_vehicle_type11$Seats_component_type)
+components_in_vehicle_type11$Engine_component_type &lt;- as.factor(components_in_vehicle_type11$Engine_component_type)
+
+# Identifying all components built in vehicle type 11 
+components_vehicle_type11 &lt;- c(levels(components_in_vehicle_type11$Body_component_type), levels(components_in_vehicle_type11$Gearshift_component_type), levels(components_in_vehicle_type11$Seats_component_type), levels(components_in_vehicle_type11$Engine_component_type))
+# --&gt; Component types built in: K4, K3AG1, K3SG1, K2LE1, K2ST1, K1BE1, K1DI1
+
+# Components within type 12
+components_in_vehicle_type12 &lt;- fread(&quot;Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv&quot;, header = TRUE, data.table = FALSE)
+
+# Adding columns for the types of components built in 
+# Body_component_type
+components_in_vehicle_type12 &lt;- components_in_vehicle_type12 %&gt;% mutate(Body_component_type = substring(components_in_vehicle_type12$ID_Karosserie, 0, regexpr(&quot;-&quot;, components_in_vehicle_type12$ID_Karosserie) -1), .after = ID_Karosserie)
+# Gearshift_component_type 
+components_in_vehicle_type12 &lt;- components_in_vehicle_type12 %&gt;% mutate(Gearshift_component_type = substring(components_in_vehicle_type12$ID_Schaltung, 0, regexpr(&quot;-&quot;, components_in_vehicle_type12$ID_Schaltung) -1), .after = ID_Schaltung)
+# Seats_component_type 
+components_in_vehicle_type12 &lt;- components_in_vehicle_type12 %&gt;% mutate(Seats_component_type = substring(components_in_vehicle_type12$ID_Sitze, 0, regexpr(&quot;-&quot;, components_in_vehicle_type12$ID_Sitze) -1), .after = ID_Sitze)
+# Engine_component_type
+components_in_vehicle_type12 &lt;- components_in_vehicle_type12 %&gt;% mutate(Engine_component_type = substring(components_in_vehicle_type12$ID_Motor, 0, regexpr(&quot;-&quot;, components_in_vehicle_type12$ID_Motor) -1), .after = ID_Motor)
+
+# Changing datatype of X_component_type to factor
+components_in_vehicle_type12$Body_component_type &lt;- as.factor(components_in_vehicle_type12$Body_component_type)
+components_in_vehicle_type12$Gearshift_component_type &lt;- as.factor(components_in_vehicle_type12$Gearshift_component_type)
+components_in_vehicle_type12$Seats_component_type &lt;- as.factor(components_in_vehicle_type12$Seats_component_type)
+components_in_vehicle_type12$Engine_component_type &lt;- as.factor(components_in_vehicle_type12$Engine_component_type)
+
+# Identifying all components built in vehicle type 12
+components_vehicle_type12 &lt;- c(levels(components_in_vehicle_type12$Body_component_type), levels(components_in_vehicle_type12$Gearshift_component_type), levels(components_in_vehicle_type12$Seats_component_type), levels(components_in_vehicle_type12$Engine_component_type))
+# --&gt; Component types built in: K5, K3AG1, K3SG1, K2LE1, K2ST1, K1BE1, K1DI1
+
+# Components contained in vehicle type 11 and type 12 
+components &lt;- c(components_vehicle_type11, components_vehicle_type12)
+components &lt;- unique(components)
+# --&gt; Component types required: K4, K3AG1, K3SG1, K2LE1, K2ST1, K1BE1, K1DI1, K5    
+components</code></pre>
+<pre><code>## [1] &quot;K4&quot;    &quot;K3AG1&quot; &quot;K3SG1&quot; &quot;K2LE1&quot; &quot;K2ST1&quot; &quot;K1BE1&quot; &quot;K1DI1&quot; &quot;K5&quot;</code></pre>
+<pre class="r"><code>#components_in_vehicle_type11 %&gt;% filter(ID_Motor == &quot;K1BE1-101-1011-97&quot;)</code></pre>
+<p>Individual components</p>
+<pre class="r"><code># Data import of required components  
+# K4
+component_K4 &lt;- fread(&quot;Data/Komponente/Komponente_K4.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K3AG1 
+component_K3AG1 &lt;- fread(&quot;Data/Komponente/Komponente_K3AG1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K3SG1 
+component_K3SG1 &lt;- fread(&quot;Data/Komponente/Komponente_K3SG1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K2LE1 --&gt; TXT --&gt; CHARACTER STRING --&gt; DATAFRAME
+txt &lt;- readLines(&quot;Data/Komponente/Komponente_K2LE1.txt&quot;)
+txt &lt;- gsub(&quot;II&quot;,&quot;,&quot;,txt)
+txt &lt;- gsub(&quot;\v&quot;,&quot;\n&quot;,txt)
+component_K2LE1 &lt;- read.table(text = txt, sep = &quot;,&quot;, header = TRUE, nrows = 50)
+rm(txt)
+
+# K2ST1 --&gt; TXT + No header
+component_K2ST1 &lt;- fread(&quot;Data/Komponente/Komponente_K2ST1.txt&quot;, data.table = FALSE, nrows = 50)
+
+# K1BE1 
+component_K1BE1 &lt;- fread(&quot;Data/Komponente/Komponente_K1BE1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K1DI1 
+component_K1DI1 &lt;- fread(&quot;Data/Komponente/Komponente_K1DI1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K5
+component_K5 &lt;- fread(&quot;Data/Komponente/Komponente_K5.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)</code></pre>
+<p>Parts in components</p>
+<pre class="r"><code># K4
+parts_in_component_K4 &lt;- fread(&quot;Data/Komponente/Bestandteile_Komponente_K4.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K3AG1
+parts_in_component_K3AG1 &lt;- fread(&quot;Data/Komponente/Bestandteile_Komponente_K3AG1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K3SG1
+parts_in_component_K3SG1 &lt;- fread(&quot;Data/Komponente/Bestandteile_Komponente_K3SG1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K2LE1
+parts_in_component_K2LE1 &lt;- fread(&quot;Data/Komponente/Bestandteile_Komponente_K2LE1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K2ST1
+parts_in_component_K2ST1 &lt;- fread(&quot;Data/Komponente/Bestandteile_Komponente_K2ST1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K1BE1
+parts_in_component_K1BE1 &lt;- fread(&quot;Data/Komponente/Bestandteile_Komponente_K1BE1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K1DI1
+parts_in_component_K1DI1 &lt;- fread(&quot;Data/Komponente/Bestandteile_Komponente_K1DI1.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# K5
+parts_in_component_K5 &lt;- fread(&quot;Data/Komponente/Bestandteile_Komponente_K5.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+parts &lt;- c()
+parts &lt;- append(parts, colnames(parts_in_component_K4))
+parts &lt;- append(parts, colnames(parts_in_component_K3AG1))
+parts &lt;- append(parts, colnames(parts_in_component_K3SG1))
+parts &lt;- append(parts, colnames(parts_in_component_K2LE1))
+parts &lt;- append(parts, colnames(parts_in_component_K2ST1))
+parts &lt;- append(parts, colnames(parts_in_component_K1BE1))
+parts &lt;- append(parts, colnames(parts_in_component_K1DI1))
+parts &lt;- append(parts, colnames(parts_in_component_K5))</code></pre>
+<p>Types of parts</p>
+<pre class="r"><code># Remove duplicates 
+parts &lt;- unique(parts)
+
+# Remove entries which are not parts 
+parts &lt;- parts[! parts %in% c(&quot;X1&quot;, &quot;V1&quot;, &quot;X&quot;, &quot;K4&quot;)]
+parts &lt;- gsub(&quot;ID_&quot;, &quot;&quot;, parts)
+parts &lt;- setdiff(parts, components) 
+sort(parts)</code></pre>
+<pre><code>##  [1] &quot;T1&quot;  &quot;T11&quot; &quot;T12&quot; &quot;T13&quot; &quot;T14&quot; &quot;T15&quot; &quot;T2&quot;  &quot;T21&quot; &quot;T22&quot; &quot;T23&quot; &quot;T24&quot; &quot;T25&quot;
+## [13] &quot;T3&quot;  &quot;T30&quot; &quot;T31&quot; &quot;T32&quot; &quot;T33&quot; &quot;T4&quot;  &quot;T5&quot;  &quot;T6&quot;</code></pre>
+<p>Individual parts</p>
+<pre class="r"><code># T1
+txt &lt;- readLines(&quot;Data/Einzelteil/Einzelteil_T01.txt&quot;)
+txt &lt;- substr(txt, start = 0, stop = 10000)
+txt &lt;- gsub(&quot; | | &quot;,&quot;,&quot;,txt, fixed = TRUE)
+txt &lt;- gsub(&quot; &quot;,&quot;\n&quot;,txt, fixed = TRUE)
+part_T01 &lt;- read.table(text = txt, sep = &quot;,&quot;, header = TRUE, nrows = 50)
+rm(txt)
+
+# T2
+txt &lt;- readLines(&quot;Data/Einzelteil/Einzelteil_T02.txt&quot;)
+txt &lt;- substr(txt, start = 0, stop = 10000)
+txt &lt;- gsub(&quot;  &quot;,&quot;,&quot;,txt, fixed = TRUE)
+txt &lt;- gsub(&quot;\t&quot;,&quot;\n&quot;,txt, fixed = TRUE)
+part_T02 &lt;- read.table(text = txt, sep = &quot;,&quot;, header = TRUE, nrows = 50)
+rm(txt)
+
+# T3
+txt &lt;- readLines(&quot;Data/Einzelteil/Einzelteil_T03.txt&quot;)
+txt &lt;- substr(txt, start = 0, stop = 10000)
+txt &lt;- gsub(&quot;|&quot;,&quot;,&quot;,txt, fixed = TRUE)
+txt &lt;- gsub(&quot;\v&quot;,&quot;\n&quot;,txt, fixed = TRUE)
+part_T03 &lt;- read.table(text = txt, sep = &quot;,&quot;, header = TRUE, nrows = 50)
+rm(txt)
+
+# T4
+part_T04 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T04.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T5
+part_T05 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T05.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T6 
+part_T06 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T06.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T11
+txt &lt;- readLines(&quot;Data/Einzelteil/Einzelteil_T11.txt&quot;)
+txt &lt;- substr(txt, start = 0, stop = 10000)
+txt &lt;- gsub(&quot;\t&quot;,&quot;,&quot;,txt, fixed = TRUE)
+txt &lt;- gsub(&quot;\f&quot;,&quot;\n&quot;,txt, fixed = TRUE)
+part_T11 &lt;- read.table(text = txt, sep = &quot;,&quot;, header = TRUE, nrows = 50)
+rm(txt)
+
+# T12
+part_T12 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T12.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T13
+part_T13 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T13.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T14
+part_T14 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T14.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T15
+part_T15 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T15.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T21
+part_T21 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T21.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T22
+#txt &lt;- readLines(&quot;Data/Einzelteil/Einzelteil_T22.txt&quot;)
+#txt &lt;- substr(txt, start = 0, stop = 10000)
+#txt &lt;- gsub(&quot;\t\\&quot;,&quot;,&quot;,txt, fixed = FALSE)
+#txt &lt;- gsub(&quot;\f&quot;,&quot;\n&quot;,txt, fixed = TRUE)
+#part_T11 &lt;- read.table(text = txt, sep = &quot;,&quot;, header = TRUE, nrows = 50)
+#rm(txt)
+
+#txt &lt;- gsub(&#39;(?&lt;![0-9])\\&#39;,&quot;&quot;,txt, fixed = TRUE)
+#txt &lt;- gsub(&quot;\\&quot;,&quot;,&quot;,txt, fixed = TRUE)
+#&#39;(?&lt;!&quot;)/(?!&quot;)&#39;
+#&#39;\&quot;&#39;
+
+# T23
+part_T23 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T23.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T24
+txt &lt;- readLines(&quot;Data/Einzelteil/Einzelteil_T24.txt&quot;)
+txt &lt;- substr(txt, start = 0, stop = 10000)
+txt &lt;- gsub(&quot;  &quot;,&quot;,&quot;,txt, fixed = TRUE)
+txt &lt;- gsub(&quot;\f&quot;,&quot;\n&quot;,txt, fixed = TRUE)
+part_T24 &lt;- read.table(text = txt, sep = &quot;,&quot;, header = TRUE, nrows = 50)
+rm(txt)
+
+# T25
+part_T25 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T25.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T30
+part_T30 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T30.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T31
+txt &lt;- readLines(&quot;Data/Einzelteil/Einzelteil_T31.txt&quot;)
+txt &lt;- substr(txt, start = 0, stop = 10000)
+txt &lt;- gsub(&quot;  &quot;,&quot;,&quot;,txt, fixed = TRUE)
+txt &lt;- gsub(&quot;\b&quot;,&quot;\n&quot;,txt, fixed = TRUE)
+part_T31 &lt;- read.table(text = txt, sep = &quot;,&quot;, header = TRUE, nrows = 50)
+rm(txt)
+
+# T32
+part_T32 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T32.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+# T33
+part_T33 &lt;- fread(&quot;Data/Einzelteil/Einzelteil_T33.csv&quot;, header = TRUE, data.table = FALSE, nrows = 50)
+
+#part_T04 %&gt;% filter(ID_T04 == &quot;4-204-2043-125&quot;)</code></pre>
 </div>
 <div id="data-preparation" class="section level2">
 <h2>4 Data Preparation</h2>
+<p>Often times imported raw data is in an untidy and unstructured format
+which is unsuitable for further data analysis.</p>
+<p>Generally data sets should fulfill the following three requirements
+in order to be in a <em>tidy</em> data format (slide 9)[1]:</p>
+<ol style="list-style-type: decimal">
+<li>Each variable has its own column.</li>
+<li>Each observation has its own row.</li>
+<li>Each observation value has its own cell.</li>
+</ol>
+<p>Furthermore, attributes contributing to good data quality are without
+limitation (slide 7)[1]:</p>
+<ul>
+<li>Incomplete data
+<ul>
+<li>Do all required cells contain data?</li>
+<li>Are empty cells meaningful or flawed?</li>
+</ul></li>
+<li>Inaccurate data
+<ul>
+<li>Are all variables in a suitable data format?</li>
+</ul></li>
+<li>Inconsistent data
+<ul>
+<li></li>
+</ul></li>
+<li>Redundant data
+<ul>
+<li></li>
+</ul></li>
+</ul>
+<p>In chapter 4.1 the imported data is examined before it is cleaned in
+chapter 4.2.</p>
+<div id="data-investigation" class="section level3">
+<h3>4.1 Data Investigation</h3>
+<p>In order to get an broad overview of each data set the following
+functions are applied (slide 10)[1]:</p>
+<ul>
+<li><em>glimpse()</em>: Shows each variable, its data type as well as
+several observations</li>
+<li><em>summary()</em>: Provides an overview over the distribution of
+variables containing numbers</li>
+</ul>
+<pre class="r"><code>glimpse(oem_locations)</code></pre>
+<pre><code>## Rows: 5
+## Columns: 5
+## $ PLZ          &lt;int&gt; 90491, 53225, 33607, 37073, 93051
+## $ ORT          &lt;chr&gt; &quot;NUERNBERG&quot;, &quot;BONN&quot;, &quot;BIELEFELD&quot;, &quot;GOETTINGEN&quot;, &quot;REGENSBU…
+## $ Werk         &lt;chr&gt; &quot;O11&quot;, &quot;O12&quot;, &quot;O13&quot;, &quot;O21&quot;, &quot;O22&quot;
+## $ Breitengrad  &lt;dbl&gt; 49.46699, 50.74202, 52.02257, 51.53570, 49.00876
+## $ `L„ngengrad` &lt;dbl&gt; 11.107353, 7.120073, 8.540961, 9.932804, 12.080696</code></pre>
+<pre class="r"><code>glimpse(vehicle_type11)</code></pre>
+<pre><code>## Rows: 1,977,164
+## Columns: 9
+## $ V1                      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,…
+## $ X1                      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,…
+## $ ID_Fahrzeug             &lt;chr&gt; &quot;11-1-11-1&quot;, &quot;11-1-11-2&quot;, &quot;11-1-11-3&quot;, &quot;11-1-1…
+## $ Produktionsdatum        &lt;IDate&gt; 2008-11-18, 2008-11-18, 2008-11-19, 2008-11-…
+## $ Herstellernummer        &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ Werksnummer             &lt;int&gt; 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11…
+## $ Fehlerhaft              &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0…
+## $ Fehlerhaft_Datum        &lt;IDate&gt; NA, NA, NA, NA, NA, NA, NA, NA, 2010-03-16, …
+## $ Fehlerhaft_Fahrleistung &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 44951, 0, 44848, 0, 44…</code></pre>
+<pre class="r"><code>glimpse(vehicle_type12)</code></pre>
+<pre><code>## Rows: 408,096
+## Columns: 9
+## $ V1                      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,…
+## $ X1                      &lt;int&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,…
+## $ ID_Fahrzeug             &lt;chr&gt; &quot;12-1-12-1&quot;, &quot;12-1-12-2&quot;, &quot;12-1-12-3&quot;, &quot;12-1-1…
+## $ Produktionsdatum        &lt;IDate&gt; 2008-11-19, 2008-11-19, 2008-11-19, 2008-11-…
+## $ Herstellernummer        &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ Werksnummer             &lt;int&gt; 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12…
+## $ Fehlerhaft              &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0…
+## $ Fehlerhaft_Datum        &lt;IDate&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
+## $ Fehlerhaft_Fahrleistung &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4795…</code></pre>
+</div>
+<div id="data-cleaning" class="section level3">
+<h3>4.2 Data Cleaning</h3>
+<pre class="r"><code>#oem_locations_test &lt;- oem_locations_test %&gt;% rename(&quot;Längengrad&quot; = &quot;L„ngengrad&quot;)</code></pre>
+</div>
 </div>
 <div id="creation-of-the-final-dataset" class="section level2">
 <h2>5 Creation of the Final Dataset</h2>
@@ -1610,7 +1938,12 @@ install_load(&quot;dplyr&quot;, &quot;readr&quot;)</code></pre>
 <h2>6 Evaluation</h2>
 </div>
 <div id="results" class="section level2">
-<h2>Results</h2>
+<h2>7 Results</h2>
+</div>
+<div id="sources" class="section level2">
+<h2>8 Sources</h2>
+<p>[1] Fachgebiet Qualitätswissenschaft, “Skript: Tidy,” Berlin,
+Nov. 08, 2023. [Online]. Available: <a href="https://isis.tu-berlin.de/pluginfile.php/2444052/mod_resource/content/1/VL04_Tidy.pdf" class="uri">https://isis.tu-berlin.de/pluginfile.php/2444052/mod_resource/content/1/VL04_Tidy.pdf</a></p>
 </div>
 
 
