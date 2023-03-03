@@ -31,32 +31,40 @@ install_load("dplyr", "readr", "data.table",  "shiny")
 
 ## 3 Data Import 
 
-OEM1 location of plants
+Vehicles produced by OEM1 
 
 ```{r, message=FALSE, warning = FALSE}
-# OEM locations 
-# OEM1 Plants: 011, 012
-# OME2 Plants: 021, 022
-# 013 --> Not relevant consultation hours 
+# OEM1 produces only the vehicles of type 11 and 12  
+
+# Vehicles type 11
+vehicle_type11 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv", header = TRUE, data.table = FALSE)
+vehicle_type11$Werksnummer <- as.factor(vehicle_type11$Werksnummer)
+plants <- levels(vehicle_type11$Werksnummer)
+
+# Vehicles type 12
+vehicle_type12 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv", header = TRUE, data.table = FALSE)
+vehicle_type12$Werksnummer <- as.factor(vehicle_type12$Werksnummer)
+plants <- append(levels(vehicle_type12$Werksnummer), plants)
+plants <- sort(unique(plants))
+
+# Plants of OEM1 
+plants
+
+#vehicle_type11 %>% filter(ID_Fahrzeug == "11-1-11-4")
+```
+
+Location of OEM1-plants  
+
+```{r, message=FALSE, warning = FALSE}
+# OEM1 Plants: 11, 12
+# (OME2 Plants: 21, 22)
+# Plant 13 --> Not relevant consultation hours 
 
 # Note: encoding was changed to "Latin-1" due to the "ä" contained in "Längengrad"
 oem_locations <- fread("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv", data.table = FALSE, encoding = "Latin-1")
-```
+oem_locations$Werk <- as.factor(oem_locations$Werk) 
 
-Vehicles of OEM1 
-
-```{r, message=FALSE, warning = FALSE}
-# Vehicles type 11
-# Produced at plant 11 and plant 12
-# Includes if vehicle is defect 
-vehicle_type11 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv", header = TRUE, data.table = FALSE)
-
-# Vehicles type 12
-# Produced at plant 12
-# Includes if vehicle is defect 
-vehicle_type12 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv", header = TRUE, data.table = FALSE)
-
-#vehicle_type11 %>% filter(ID_Fahrzeug == "11-1-11-4")
+oem_locations %>% filter(Werk == "O11" | Werk == "O12")
 ```
 
 Built in components
@@ -239,7 +247,7 @@ part_T06 <- fread("Data/Einzelteil/Einzelteil_T06.csv", header = TRUE, data.tabl
 
 # T11
 txt <- readLines("Data/Einzelteil/Einzelteil_T11.txt")
-txt <- substr(txt, start = 0, stop = 10000)
+txt <- substr(txt, start = 0, stop = 10000) # reduces computing time, remove later 
 txt <- gsub("\t",",",txt, fixed = TRUE)
 txt <- gsub("\f","\n",txt, fixed = TRUE)
 part_T11 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
