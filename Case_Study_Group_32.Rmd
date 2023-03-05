@@ -26,23 +26,27 @@ if(!require(install.load)){
 }
 
 # Installation and loading of the stated packages if necessary   
-install_load("dplyr", "readr", "data.table",  "shiny")
+install_load("dplyr", "readr", "data.table",  "shiny", "tidyr")
 ```
 
 ## 3 Data Import 
 
-Vehicles produced by OEM1 
+**Vehicles produced by OEM1**
+
+*Imported variables: ID_Fahrzeug, Produktionsdatum, Werksnummer, Fehlerhaft, Fehlerhaft_Datum*
+
+*Not imported variables: V1, X1, Herstellernummer, Fehlerhaft_Fahrleistung*
 
 ```{r, message=FALSE, warning = FALSE}
 # OEM1 produces only the vehicles of type 11 and 12  
 
 # Vehicles type 11
-vehicle_type11 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv", header = TRUE, data.table = FALSE)
+vehicle_type11 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv", header = TRUE, data.table = FALSE, select =  c("ID_Fahrzeug", "Produktionsdatum", "Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum"))
 vehicle_type11$Werksnummer <- as.factor(vehicle_type11$Werksnummer)
 plants <- levels(vehicle_type11$Werksnummer)
 
 # Vehicles type 12
-vehicle_type12 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv", header = TRUE, data.table = FALSE)
+vehicle_type12 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv", header = TRUE, data.table = FALSE, select =  c("ID_Fahrzeug", "Produktionsdatum", "Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum"))
 vehicle_type12$Werksnummer <- as.factor(vehicle_type12$Werksnummer)
 plants <- append(levels(vehicle_type12$Werksnummer), plants)
 plants <- sort(unique(plants))
@@ -53,7 +57,11 @@ plants
 #vehicle_type11 %>% filter(ID_Fahrzeug == "11-1-11-4")
 ```
 
-Location of OEM1-plants  
+**Location of OEM1-plants**
+
+*Imported variables: ORT, Werk, Breitengrad, L„ngengrad*
+
+*Not imported variables: PLZ*
 
 ```{r, message=FALSE, warning = FALSE}
 # OEM1 Plants: 11, 12
@@ -61,13 +69,17 @@ Location of OEM1-plants
 # Plant 13 --> Not relevant consultation hours 
 
 # Note: encoding was changed to "Latin-1" due to the "ä" contained in "Längengrad"
-oem_locations <- fread("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv", data.table = FALSE, encoding = "Latin-1")
+oem_locations <- fread("Data/Geodaten/OEM_Werke_2017-07-04_TrR.csv", data.table = FALSE, encoding = "Latin-1", drop = "PLZ")
 oem_locations$Werk <- as.factor(oem_locations$Werk) 
 
 oem_locations %>% filter(Werk == "O11" | Werk == "O12")
 ```
 
-Built in components
+**Built-in components**
+
+*Imported variables: All*
+
+*Not imported variables: None*
 
 ```{r, message=FALSE, warning = FALSE}
 # Components within type 11
@@ -93,6 +105,9 @@ components_in_vehicle_type11$Engine_component_type <- as.factor(components_in_ve
 components_vehicle_type11 <- c(levels(components_in_vehicle_type11$Body_component_type), levels(components_in_vehicle_type11$Gearshift_component_type), levels(components_in_vehicle_type11$Seats_component_type), levels(components_in_vehicle_type11$Engine_component_type))
 # --> Component types built in: K4, K3AG1, K3SG1, K2LE1, K2ST1, K1BE1, K1DI1
 
+# Remove X_component_type columns 
+components_in_vehicle_type11 <- components_in_vehicle_type11 %>% select (-c(Body_component_type, Gearshift_component_type, Seats_component_type, Engine_component_type))
+
 # Components within type 12
 components_in_vehicle_type12 <- fread("Data/Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", header = TRUE, data.table = FALSE)
 
@@ -116,6 +131,9 @@ components_in_vehicle_type12$Engine_component_type <- as.factor(components_in_ve
 components_vehicle_type12 <- c(levels(components_in_vehicle_type12$Body_component_type), levels(components_in_vehicle_type12$Gearshift_component_type), levels(components_in_vehicle_type12$Seats_component_type), levels(components_in_vehicle_type12$Engine_component_type))
 # --> Component types built in: K5, K3AG1, K3SG1, K2LE1, K2ST1, K1BE1, K1DI1
 
+# Remove X_component_type columns 
+components_in_vehicle_type12 <- components_in_vehicle_type12 %>% select (-c(Body_component_type, Gearshift_component_type, Seats_component_type, Engine_component_type))
+
 # Components contained in vehicle type 11 and type 12 
 components <- c(components_vehicle_type11, components_vehicle_type12)
 components <- unique(components)
@@ -125,37 +143,105 @@ components
 #components_in_vehicle_type11 %>% filter(ID_Motor == "K1BE1-101-1011-97")
 ```
 
-Individual components 
+**Individual components **
+
+*Imported variables: ID_X.x, Produktionsdatum.x, Fehlerhaft.x, Fehlerhaft_Datum.x, ID_X.y, Produktionsdatum.y, Fehlerhaft.y, Fehlerhaft_Datum.y*
+
+*Not imported variables: V1, X1, Herstellernummer.x, Fehlerhaft_Fahrleistung.x, Herstellernummer.y, Fehlerhaft_Fahrleistung.y, Werksnummer.x, Werksnummer.y*
 
 ```{r, message=FALSE, warning = FALSE}
 # Data import of required components  
 # K4
-component_K4 <- fread("Data/Komponente/Komponente_K4.csv", header = TRUE, data.table = FALSE, nrows = 50)
+ component_K4 <- fread("Data/Komponente/Komponente_K4.csv", header = TRUE, data.table = FALSE) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
+  mutate(component_failure = 1) %>% 
+  mutate(id_body = if_else(is.na(ID_Karosserie.x), ID_Karosserie.y, ID_Karosserie.x)) %>% 
+  mutate(production_date = if_else(is.na(Produktionsdatum.x), Produktionsdatum.y, Produktionsdatum.x)) %>% 
+  mutate(failure_date = if_else(is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.y, Fehlerhaft_Datum.x)) %>% 
+  select(-(1:16)) %>% 
+  relocate(id_body, production_date, component_failure, failure_date)  
 
 # K3AG1 
-component_K3AG1 <- fread("Data/Komponente/Komponente_K3AG1.csv", header = TRUE, data.table = FALSE, nrows = 50)
-
+component_K3AG1 <- fread("Data/Komponente/Komponente_K3AG1.csv", header = TRUE, data.table = FALSE) %>% filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(component_failure = 1) %>% 
+  mutate(id_gearshift = 
+     if_else(!is.na(ID_Schaltung.x), ID_Schaltung.x, 
+     if_else(!is.na(ID_Schaltung.y), ID_Schaltung.y, 
+     if_else(!is.na(ID_Schaltung), ID_Schaltung, NA)))) %>% 
+  mutate(production_date = 
+     if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, 
+     if_else(!is.na(Produktionsdatum.y), Produktionsdatum.y, 
+     if_else(!is.na(Produktionsdatum), Produktionsdatum, NA)))) %>% 
+  mutate(failure_date = 
+     if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
+     if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
+     if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% 
+  select(-(1:23)) %>% relocate(id_gearshift, production_date, component_failure, failure_date)  
+   
 # K3SG1 
-component_K3SG1 <- fread("Data/Komponente/Komponente_K3SG1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+component_K3SG1 <- fread("Data/Komponente/Komponente_K3SG1.csv", header = TRUE, data.table = FALSE) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
+  mutate(component_failure = 1) %>% 
+  mutate(id_gearshift = if_else(!is.na(ID_Schaltung.x), ID_Schaltung.x, ID_Schaltung.y)) %>% 
+  mutate(production_date = if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, Produktionsdatum.y)) %>% 
+  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  select(-(1:16)) %>% 
+  relocate(id_gearshift, production_date, component_failure, failure_date)  
 
 # K2LE1 --> TXT --> CHARACTER STRING --> DATAFRAME
 txt <- readLines("Data/Komponente/Komponente_K2LE1.txt")
+#txt <- substr(txt, start = 0, stop = 10000)
 txt <- gsub("II",",",txt)
 txt <- gsub("\v","\n",txt)
-component_K2LE1 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+component_K2LE1 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
+  mutate(component_failure = 1) %>% 
+  mutate(id_seats = if_else(!is.na(ID_Sitze.x), ID_Sitze.x, ID_Sitze.y)) %>% 
+  mutate(production_date = if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, Produktionsdatum.y)) %>% 
+  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  select(-(1:16)) %>% 
+  relocate(id_seats, production_date, component_failure, failure_date) 
 rm(txt)
 
 # K2ST1 --> TXT + No header
-component_K2ST1 <- fread("Data/Komponente/Komponente_K2ST1.txt", data.table = FALSE, nrows = 50)
+component_K2ST1 <- fread("Data/Komponente/Komponente_K2ST1.txt", data.table = FALSE) %>% 
+  filter(Fehlerhaft == 1) %>% 
+  rename(id_seats = ID_Sitze, production_date = Produktionsdatum, component_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_seats, production_date, component_failure, failure_date) %>% 
+  select(-(5:9))  
 
 # K1BE1 
-component_K1BE1 <- fread("Data/Komponente/Komponente_K1BE1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+component_K1BE1 <- fread("Data/Komponente/Komponente_K1BE1.csv", header = TRUE, data.table = FALSE) %>% 
+  filter(Fehlerhaft == 1) %>% 
+  rename(id_engine = ID_Motor, production_date = Produktionsdatum_Origin_01011970, component_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_engine, production_date, component_failure, failure_date) %>% 
+  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
+  select(-(5:10))  
 
 # K1DI1 
-component_K1DI1 <- fread("Data/Komponente/Komponente_K1DI1.csv", header = TRUE, data.table = FALSE, nrows = 50)
+component_K1DI1 <- fread("Data/Komponente/Komponente_K1DI1.csv", header = TRUE, data.table = FALSE) %>% filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(component_failure = 1) %>% 
+  mutate(id_engine = 
+     if_else(!is.na(ID_Motor.x), ID_Motor.x, 
+     if_else(!is.na(ID_Motor.y), ID_Motor.y, 
+     if_else(!is.na(ID_Motor), ID_Motor, NA)))) %>% 
+  mutate(production_date = 
+     if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, 
+     if_else(!is.na(Produktionsdatum.y), Produktionsdatum.y, 
+     if_else(!is.na(Produktionsdatum), Produktionsdatum, NA)))) %>% 
+  mutate(failure_date = 
+     if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
+     if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
+     if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% relocate(id_engine, production_date, component_failure, failure_date) %>% 
+  select(-(5:27)) 
 
 # K5
-component_K5 <- fread("Data/Komponente/Komponente_K5.csv", header = TRUE, data.table = FALSE, nrows = 50)
+component_K5 <- fread("Data/Komponente/Komponente_K5.csv", header = TRUE, data.table = FALSE) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
+  mutate(component_failure = 1) %>% 
+  mutate(id_body = if_else(!is.na(ID_Karosserie.x), ID_Karosserie.x, ID_Karosserie.y)) %>% 
+  mutate(production_date = if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, Produktionsdatum.y)) %>% 
+  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  select(-(1:16)) %>% 
+  relocate(id_body, production_date, component_failure, failure_date) 
 ```
 
 Parts in components 
@@ -217,7 +303,7 @@ txt <- readLines("Data/Einzelteil/Einzelteil_T01.txt")
 txt <- substr(txt, start = 0, stop = 10000)
 txt <- gsub(" | | ",",",txt, fixed = TRUE)
 txt <- gsub(" ","\n",txt, fixed = TRUE)
-part_T01 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+part_T01 <- fread(text = txt, sep = ",", nrows = 50, data.table = FALSE)
 rm(txt)
 
 # T2
@@ -225,7 +311,7 @@ txt <- readLines("Data/Einzelteil/Einzelteil_T02.txt")
 txt <- substr(txt, start = 0, stop = 10000)
 txt <- gsub("  ",",",txt, fixed = TRUE)
 txt <- gsub("\t","\n",txt, fixed = TRUE)
-part_T02 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+part_T02 <- fread(text = txt, sep = ",", nrows = 50, data.table = FALSE)
 rm(txt)
 
 # T3
@@ -233,7 +319,7 @@ txt <- readLines("Data/Einzelteil/Einzelteil_T03.txt")
 txt <- substr(txt, start = 0, stop = 10000)
 txt <- gsub("|",",",txt, fixed = TRUE)
 txt <- gsub("\v","\n",txt, fixed = TRUE)
-part_T03 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+part_T03 <- fread(text = txt, sep = ",", nrows = 50, data.table = FALSE)
 rm(txt)
 
 # T4
@@ -250,7 +336,7 @@ txt <- readLines("Data/Einzelteil/Einzelteil_T11.txt")
 txt <- substr(txt, start = 0, stop = 10000) # reduces computing time, remove later 
 txt <- gsub("\t",",",txt, fixed = TRUE)
 txt <- gsub("\f","\n",txt, fixed = TRUE)
-part_T11 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+part_T11 <- fread(text = txt, sep = ",", nrows = 50, data.table = FALSE)
 rm(txt)
 
 # T12
@@ -289,7 +375,7 @@ txt <- readLines("Data/Einzelteil/Einzelteil_T24.txt")
 txt <- substr(txt, start = 0, stop = 10000)
 txt <- gsub("  ",",",txt, fixed = TRUE)
 txt <- gsub("\f","\n",txt, fixed = TRUE)
-part_T24 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+part_T24 <- fread(text = txt, sep = ",", nrows = 50, data.table = FALSE)
 rm(txt)
 
 # T25
@@ -303,7 +389,7 @@ txt <- readLines("Data/Einzelteil/Einzelteil_T31.txt")
 txt <- substr(txt, start = 0, stop = 10000)
 txt <- gsub("  ",",",txt, fixed = TRUE)
 txt <- gsub("\b","\n",txt, fixed = TRUE)
-part_T31 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
+part_T31 <- fread(text = txt, sep = ",", nrows = 50, data.table = FALSE)
 rm(txt)
 
 # T32
