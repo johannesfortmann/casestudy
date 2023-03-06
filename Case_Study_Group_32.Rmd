@@ -54,7 +54,7 @@ oem_locations
 
 # Vehicles type 11
 vehicle_type11 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11.csv", header = TRUE, data.table = FALSE, select =  c("ID_Fahrzeug", "Produktionsdatum", "Werksnummer", "Fehlerhaft", "Fehlerhaft_Datum")) %>% 
-  mutate(plant = as.factor(Werksnummer))
+  mutate(plant = as.factor(Werksnummer)) 
 plants <- levels(vehicle_type11$plant)
 
 # Vehicles type 12
@@ -62,10 +62,9 @@ vehicle_type12 <- fread("Data/Fahrzeug/Fahrzeuge_OEM1_Typ12.csv", header = TRUE,
   mutate(plant = as.factor(Werksnummer)) 
 plants <- append(levels(vehicle_type12$plant), plants)
 plants <- sort(unique(plants))
-
-# Plants of OEM1 
-plants
 ```
+
+The OEM1 generally owes two production plants: `r noquote(levels(plants))`. The vehicle type 11 is produced at plant number `r noquote(levels(vehicle_type11$plant)[1])` and plant number `r noquote(levels(vehicle_type11$plant)[2])` whereas the vehicle type 12 is only produced at plant number `r noquote(levels(vehicle_type12$plant))`.      
 
 **Built-in components**
 
@@ -140,31 +139,31 @@ components
 # K4 --> Body
 component_K4 <- fread("Data/Komponente/Komponente_K4.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(component_failure = 1) %>% 
+  mutate(component_K4_failure = 1) %>% 
   mutate(id_body = if_else(is.na(ID_Karosserie.x), ID_Karosserie.y, ID_Karosserie.x)) %>% 
-  mutate(failure_date = if_else(is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.y, Fehlerhaft_Datum.x)) %>% 
-  relocate(id_body, component_failure, failure_date) %>% 
+  mutate(component_K4_failure_date = if_else(is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.y, Fehlerhaft_Datum.x)) %>% 
+  relocate(id_body, component_K4_failure, component_K4_failure_date) %>% 
   select(-(4:19)) 
 
 # K3AG1 --> Gearshift
-component_K3AG1 <- fread("Data/Komponente/Komponente_K3AG1.csv", header = TRUE, data.table = FALSE) %>% filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(component_failure = 1) %>% 
+component_K3AG1 <- fread("Data/Komponente/Komponente_K3AG1.csv", header = TRUE, data.table = FALSE) %>% filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(component_K3AG1_failure = 1) %>% 
   mutate(id_gearshift = 
      if_else(!is.na(ID_Schaltung.x), ID_Schaltung.x, 
      if_else(!is.na(ID_Schaltung.y), ID_Schaltung.y, 
      if_else(!is.na(ID_Schaltung), ID_Schaltung, NA)))) %>% 
-  mutate(failure_date = 
+  mutate(component_K3AG1_failure_date = 
      if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
      if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
-     if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% relocate(id_gearshift, component_failure, failure_date) %>% 
+     if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% relocate(id_gearshift, component_K3AG1_failure, component_K3AG1_failure_date) %>% 
   select(-(4:26)) 
    
 # K3SG1 --> Gearshift  
 component_K3SG1 <- fread("Data/Komponente/Komponente_K3SG1.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(component_failure = 1) %>% 
+  mutate(component_K3SG1_failure = 1) %>% 
   mutate(id_gearshift = if_else(!is.na(ID_Schaltung.x), ID_Schaltung.x, ID_Schaltung.y)) %>% 
-  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
-  relocate(id_gearshift, component_failure, failure_date) %>% 
+  mutate(component_K3SG1_failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  relocate(id_gearshift, component_K3SG1_failure, component_K3SG1_failure_date) %>% 
   select(-(4:19))   
 
 # K2LE1 --> seats
@@ -173,61 +172,58 @@ txt <- gsub("II",",",txt)
 txt <- gsub("\v","\n",txt)
 component_K2LE1 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(component_failure = 1) %>% 
+  mutate(component_K2LE1_failure = 1) %>% 
   mutate(id_seats = if_else(!is.na(ID_Sitze.x), ID_Sitze.x, ID_Sitze.y)) %>% 
-  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
-  relocate(id_seats, component_failure, failure_date) %>%
+  mutate(component_K2LE1_failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  relocate(id_seats, component_K2LE1_failure, component_K2LE1_failure_date) %>%
   select(-(4:19))
 rm(txt)
 
 # K2ST1 --> seats
 component_K2ST1 <- fread("Data/Komponente/Komponente_K2ST1.txt", data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_seats = ID_Sitze, component_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_seats, component_failure, failure_date) %>% 
+  rename(id_seats = ID_Sitze, component_K2ST1_failure = Fehlerhaft, component_K2ST1_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_seats, component_K2ST1_failure, component_K2ST1_failure_date) %>% 
   select(-(4:9))  
 
 # K1BE1 --> engine
 component_K1BE1 <- fread("Data/Komponente/Komponente_K1BE1.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_engine = ID_Motor, component_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_engine, component_failure, failure_date) %>% 
+  rename(id_engine = ID_Motor, component_K1BE1_failure = Fehlerhaft, component_K1BE1_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_engine, component_K1BE1_failure, component_K1BE1_failure_date) %>% 
   select(-(4:10))  
 
 # K1DI1 --> engine  
-component_K1DI1 <- fread("Data/Komponente/Komponente_K1DI1.csv", header = TRUE, data.table = FALSE) %>% filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(component_failure = 1) %>% 
+component_K1DI1 <- fread("Data/Komponente/Komponente_K1DI1.csv", header = TRUE, data.table = FALSE) %>% filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(component_K1DI1_failure = 1) %>% 
   mutate(id_engine = 
      if_else(!is.na(ID_Motor.x), ID_Motor.x, 
      if_else(!is.na(ID_Motor.y), ID_Motor.y, 
      if_else(!is.na(ID_Motor), ID_Motor, NA)))) %>% 
-  mutate(failure_date = 
+  mutate(component_K1DI1_failure_date = 
      if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
      if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
      if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% 
-  relocate(id_engine, component_failure, failure_date) %>% 
+  relocate(id_engine, component_K1DI1_failure, component_K1DI1_failure_date) %>% 
   select(-(4:26)) 
 
 # K5 --> body
 component_K5 <- fread("Data/Komponente/Komponente_K5.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(component_failure = 1) %>% 
+  mutate(component_K5_failure = 1) %>% 
   mutate(id_body = if_else(!is.na(ID_Karosserie.x), ID_Karosserie.x, ID_Karosserie.y)) %>% 
-  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
-  relocate(id_body, component_failure, failure_date) %>%
+  mutate(component_K5_failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  relocate(id_body, component_K5_failure, component_K5_failure_date) %>%
   select(-(4:19)) 
 ```
 
-Parts in components 
+**Parts in components**
 
 ```{r, message=FALSE, warning = FALSE}
-# K4
-parts_in_component_K4 <- fread("Data/Komponente/Bestandteile_Komponente_K4.csv", header = TRUE, data.table = FALSE)
+# K1BE1
+parts_in_component_K1BE1 <- fread("Data/Komponente/Bestandteile_Komponente_K1BE1.csv", header = TRUE, data.table = FALSE)
 
-# K3AG1
-parts_in_component_K3AG1 <- fread("Data/Komponente/Bestandteile_Komponente_K3AG1.csv", header = TRUE, data.table = FALSE)
-
-# K3SG1
-parts_in_component_K3SG1 <- fread("Data/Komponente/Bestandteile_Komponente_K3SG1.csv", header = TRUE, data.table = FALSE)
+# K1DI1
+parts_in_component_K1DI1 <- fread("Data/Komponente/Bestandteile_Komponente_K1DI1.csv", header = TRUE, data.table = FALSE)
 
 # K2LE1
 parts_in_component_K2LE1 <- fread("Data/Komponente/Bestandteile_Komponente_K2LE1.csv", header = TRUE, data.table = FALSE)
@@ -235,11 +231,14 @@ parts_in_component_K2LE1 <- fread("Data/Komponente/Bestandteile_Komponente_K2LE1
 # K2ST1
 parts_in_component_K2ST1 <- fread("Data/Komponente/Bestandteile_Komponente_K2ST1.csv", header = TRUE, data.table = FALSE)
 
-# K1BE1
-parts_in_component_K1BE1 <- fread("Data/Komponente/Bestandteile_Komponente_K1BE1.csv", header = TRUE, data.table = FALSE)
+# K3AG1
+parts_in_component_K3AG1 <- fread("Data/Komponente/Bestandteile_Komponente_K3AG1.csv", header = TRUE, data.table = FALSE)
 
-# K1DI1
-parts_in_component_K1DI1 <- fread("Data/Komponente/Bestandteile_Komponente_K1DI1.csv", header = TRUE, data.table = FALSE)
+# K3SG1
+parts_in_component_K3SG1 <- fread("Data/Komponente/Bestandteile_Komponente_K3SG1.csv", header = TRUE, data.table = FALSE)
+
+# K4
+parts_in_component_K4 <- fread("Data/Komponente/Bestandteile_Komponente_K4.csv", header = TRUE, data.table = FALSE)
 
 # K5
 parts_in_component_K5 <- fread("Data/Komponente/Bestandteile_Komponente_K5.csv", header = TRUE, data.table = FALSE)
@@ -255,7 +254,7 @@ parts <- append(parts, colnames(parts_in_component_K1DI1))
 parts <- append(parts, colnames(parts_in_component_K5))
 ```
 
-Types of parts 
+**Types of parts**
 
 ```{r, message=FALSE, warning = FALSE}
 # Remove duplicates 
@@ -268,8 +267,6 @@ parts <- setdiff(parts, components)
 sort(parts)
 ```
 
-Individual parts 
-
 **Individual parts **
 
 *Imported variables: id_TX, part_failure, failure_date*
@@ -280,22 +277,17 @@ txt <- readLines("Data/Einzelteil/Einzelteil_T01.txt")
 txt <- gsub(" | | ",",",txt, fixed = TRUE)
 txt <- gsub(" ","\n",txt, fixed = TRUE)
 part_T01 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
-  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_failure = 1) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_T01_failure = 1) %>% 
   mutate(id_T01 = 
      if_else(!is.na(ID_T01.x), ID_T01.x, 
      if_else(!is.na(ID_T01.y), ID_T01.y, 
      if_else(!is.na(ID_T01), ID_T01, NA)))) %>% 
-  mutate(production_date = 
-     if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, 
-     if_else(!is.na(Produktionsdatum.y), Produktionsdatum.y, 
-     if_else(!is.na(Produktionsdatum), Produktionsdatum, NA)))) %>% 
-  mutate(failure_date = 
+  mutate(part_T01_failure_date = 
      if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
      if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
      if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% 
-  relocate(id_T01, production_date, part_failure, failure_date) %>% 
-  select(-(5:27)) 
-rm(txt)
+  relocate(id_T01, part_T01_failure, part_T01_failure_date) %>% 
+  select(-(4:26)) 
 
 # T2
 txt <- readLines("Data/Einzelteil/Einzelteil_T02.txt")
@@ -303,13 +295,11 @@ txt <- gsub("  ",",",txt, fixed = TRUE)
 txt <- gsub("\t","\n",txt, fixed = TRUE)
 part_T02 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(part_failure = 1) %>% 
+  mutate(part_T02_failure = 1) %>% 
   mutate(id_T02 = if_else(!is.na(ID_T02.x), ID_T02.x, ID_T02.y)) %>% 
-  mutate(production_date = if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, Produktionsdatum.y)) %>% 
-  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
-  relocate(id_T02, production_date, part_failure, failure_date) %>% 
-  select(-(5:20)) 
-rm(txt)
+  mutate(part_T02_failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  relocate(id_T02, part_T02_failure, part_T02_failure_date) %>% 
+  select(-(4:19)) 
 
 # T3
 txt <- readLines("Data/Einzelteil/Einzelteil_T03.txt")
@@ -317,37 +307,32 @@ txt <- gsub("|",",",txt, fixed = TRUE)
 txt <- gsub("\v","\n",txt, fixed = TRUE)
 part_T03 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T03 = ID_T03, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T03, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))  
-rm(txt)
+  rename(id_T03 = ID_T03, part_T03_failure = Fehlerhaft, part_T03_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T03, part_T03_failure, part_T03_failure_date) %>% 
+  select(-(4:10))  
 
 # T4
 part_T04 <- fread("Data/Einzelteil/Einzelteil_T04.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T04 = ID_T04, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T04, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))  
+  rename(id_T04 = ID_T04, part_T04_failure = Fehlerhaft, part_T04_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T04, part_T04_failure, part_T04_failure_date) %>% 
+  select(-(4:10))  
 
 # T5
 part_T05 <- fread("Data/Einzelteil/Einzelteil_T05.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(part_failure = 1) %>% 
+  mutate(part_T05_failure = 1) %>% 
   mutate(id_T05 = if_else(!is.na(ID_T05.x), ID_T05.x, ID_T05.y)) %>% 
-  mutate(production_date = if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, Produktionsdatum.y)) %>% 
-  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
-  relocate(id_T05, production_date, part_failure, failure_date) %>% 
-  select(-(5:20)) 
+  mutate(part_T05_failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  relocate(id_T05, part_T05_failure, part_T05_failure_date) %>% 
+  select(-(4:19)) 
 
 # T6 
 part_T06 <- fread("Data/Einzelteil/Einzelteil_T06.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T06 = ID_T06, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T06, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))   
+  rename(id_T06 = ID_T06, part_T06_failure = Fehlerhaft, part_T06_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T06, part_T06_failure, part_T06_failure_date) %>% 
+  select(-(4:10))   
 
 # T11
 txt <- readLines("Data/Einzelteil/Einzelteil_T11.txt")
@@ -355,63 +340,53 @@ txt <- gsub("\t",",",txt, fixed = TRUE)
 txt <- gsub("\f","\n",txt, fixed = TRUE)
 part_T11 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T11 = ID_T11, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T11, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))   
-rm(txt)
+  rename(id_T11 = ID_T11, part_T11_failure = Fehlerhaft, part_T11_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T11, part_T11_failure, part_T11_failure_date) %>% 
+  select(-(4:10))   
 
 # T12
 part_T12 <- fread("Data/Einzelteil/Einzelteil_T12.csv", header = TRUE, data.table = FALSE) %>% 
-  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_failure = 1) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_T12_failure = 1) %>% 
   mutate(id_T12 = 
      if_else(!is.na(ID_T12.x), ID_T12.x, 
      if_else(!is.na(ID_T12.y), ID_T12.y, 
      if_else(!is.na(ID_T12), ID_T12, NA)))) %>% 
-  mutate(production_date = 
-     if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, 
-     if_else(!is.na(Produktionsdatum.y), Produktionsdatum.y, 
-     if_else(!is.na(Produktionsdatum), Produktionsdatum, NA)))) %>% 
-  mutate(failure_date = 
+  mutate(part_T12_failure_date = 
      if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
      if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
      if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% 
-  relocate(id_T12, production_date, part_failure, failure_date) %>% 
-  select(-(5:27)) 
+  relocate(id_T12, part_T12_failure, part_T12_failure_date) %>% 
+  select(-(4:26)) 
 
 # T13
 part_T13 <- fread("Data/Einzelteil/Einzelteil_T13.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T13 = ID_T13, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T13, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))   
+  rename(id_T13 = ID_T13, part_T13_failure = Fehlerhaft, part_T13_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T13, part_T13_failure, part_T13_failure_date) %>% 
+  select(-(4:10))   
 
 # T14
 part_T14 <- fread("Data/Einzelteil/Einzelteil_T14.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T14 = ID_T14, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T14, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))   
+  rename(id_T14 = ID_T14, part_T14_failure = Fehlerhaft, part_T14_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T14, part_T14_failure, part_T14_failure_date) %>% 
+  select(-(4:10))   
 
 # T15
 part_T15 <- fread("Data/Einzelteil/Einzelteil_T15.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(part_failure = 1) %>% 
+  mutate(part_T15_failure = 1) %>% 
   mutate(id_T15 = if_else(!is.na(ID_T15.x), ID_T15.x, ID_T15.y)) %>% 
-  mutate(production_date = if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, Produktionsdatum.y)) %>% 
-  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
-  relocate(id_T15, production_date, part_failure, failure_date) %>% 
-  select(-(5:20)) 
+  mutate(part_T15_failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  relocate(id_T15, part_T15_failure, part_T15_failure_date) %>% 
+  select(-(4:19)) 
 
 # T21
 part_T21 <- fread("Data/Einzelteil/Einzelteil_T21.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T21 = ID_T21, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T21, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))   
+  rename(id_T21 = ID_T21, part_T21_failure = Fehlerhaft, part_T21_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T21, part_T21_failure, part_T21_failure_date) %>% 
+  select(-(4:10))   
 
 # T22
 txt <- readLines("Data/Einzelteil/Einzelteil_T22.txt")
@@ -422,79 +397,64 @@ txt <- gsub("\t",",",txt)
 txt <- gsub("\"\"","\n",txt)
 txt <- gsub("\"","\n",txt)
 part_T22 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
-  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_failure = 1) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_T22_failure = 1) %>% 
   mutate(id_T22 = 
      if_else(!is.na(ID_T22.x), ID_T22.x, 
      if_else(!is.na(ID_T22.y), ID_T22.y, 
      if_else(!is.na(ID_T22), ID_T22, NA)))) %>% 
-  mutate(production_date = 
-     if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, 
-     if_else(!is.na(Produktionsdatum.y), Produktionsdatum.y, 
-     if_else(!is.na(Produktionsdatum), Produktionsdatum, NA)))) %>% 
-  mutate(failure_date = 
+  mutate(part_T22_failure_date = 
      if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
      if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
      if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% 
-  relocate(id_T22, production_date, part_failure, failure_date) %>% 
-  select(-(5:27)) 
+  relocate(id_T22, part_T22_failure, part_T22_failure_date) %>% 
+  select(-(4:26)) 
 
 # T23
 part_T23 <- fread("Data/Einzelteil/Einzelteil_T23.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(part_failure = 1) %>% 
+  mutate(part_T23_failure = 1) %>% 
   mutate(id_T23 = if_else(!is.na(ID_T23.x), ID_T23.x, ID_T23.y)) %>% 
-  mutate(production_date = if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, Produktionsdatum.y)) %>% 
-  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
-  relocate(id_T23, production_date, part_failure, failure_date) %>% 
-  select(-(5:20)) 
+  mutate(part_T23_failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  relocate(id_T23, part_T23_failure, part_T23_failure_date) %>% 
+  select(-(4:19)) 
 
 # T24
 txt <- readLines("Data/Einzelteil/Einzelteil_T24.txt")
 txt <- gsub("  ",",",txt, fixed = TRUE)
 txt <- gsub("\f","\n",txt, fixed = TRUE)
 part_T24 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
-  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_failure = 1) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_T24_failure = 1) %>% 
   mutate(id_T24 = 
      if_else(!is.na(ID_T24.x), ID_T24.x, 
      if_else(!is.na(ID_T24.y), ID_T24.y, 
      if_else(!is.na(ID_T24), ID_T24, NA)))) %>% 
-  mutate(production_date = 
-     if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, 
-     if_else(!is.na(Produktionsdatum.y), Produktionsdatum.y, 
-     if_else(!is.na(Produktionsdatum), Produktionsdatum, NA)))) %>% 
-  mutate(failure_date = 
+  mutate(part_T24_failure_date = 
      if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
      if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
      if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% 
-  relocate(id_T24, production_date, part_failure, failure_date) %>% 
-  select(-(5:27)) 
-rm(txt)
+  relocate(id_T24, part_T24_failure, part_T24_failure_date) %>% 
+  select(-(4:26)) 
 
 # T25
-part_T25 <- fread("Data/Einzelteil/Einzelteil_T25.csv", header = TRUE, data.table = FALSE, nrows = 50) %>% 
+part_T25 <- fread("Data/Einzelteil/Einzelteil_T25.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T25 = ID_T25, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T25, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))   
+  rename(id_T25 = ID_T25, part_T25_failure = Fehlerhaft, part_T25_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T25, part_T25_failure, part_T25_failure_date) %>% 
+  select(-(4:10))   
 
 # T30
 part_T30 <- fread("Data/Einzelteil/Einzelteil_T30.csv", header = TRUE, data.table = FALSE) %>% 
-  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_failure = 1) %>% 
+  filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1 | Fehlerhaft == 1) %>% mutate(part_T30_failure = 1) %>% 
   mutate(id_T30 = 
      if_else(!is.na(ID_T30.x), ID_T30.x, 
      if_else(!is.na(ID_T30.y), ID_T30.y, 
      if_else(!is.na(ID_T30), ID_T30, NA)))) %>% 
-  mutate(production_date = 
-     if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, 
-     if_else(!is.na(Produktionsdatum.y), Produktionsdatum.y, 
-     if_else(!is.na(Produktionsdatum), Produktionsdatum, NA)))) %>% 
-  mutate(failure_date = 
+  mutate(part_T30_failure_date = 
      if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, 
      if_else(!is.na(Fehlerhaft_Datum.y), Fehlerhaft_Datum.y, 
      if_else(!is.na(Fehlerhaft_Datum), Fehlerhaft_Datum, NA)))) %>% 
-  relocate(id_T30, production_date, part_failure, failure_date) %>% 
-  select(-(5:27)) 
+  relocate(id_T30, part_T30_failure, part_T30_failure_date) %>% 
+  select(-(4:26)) 
 
 # T31
 txt <- readLines("Data/Einzelteil/Einzelteil_T31.txt")
@@ -502,29 +462,28 @@ txt <- gsub("  ",",",txt, fixed = TRUE)
 txt <- gsub("\b","\n",txt, fixed = TRUE)
 part_T31 <- fread(text = txt, sep = ",", data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T31 = ID_T31, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T31, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))   
-rm(txt)
+  rename(id_T31 = ID_T31, part_T31_failure = Fehlerhaft, part_T31_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T31, part_T31_failure, part_T31_failure_date) %>% 
+  select(-(4:10))   
 
 # T32
 part_T32 <- fread("Data/Einzelteil/Einzelteil_T32.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft.x == 1 | Fehlerhaft.y == 1) %>% 
-  mutate(part_failure = 1) %>% 
+  mutate(part_T32_failure = 1) %>% 
   mutate(id_T32 = if_else(!is.na(ID_T32.x), ID_T32.x, ID_T32.y)) %>% 
-  mutate(production_date = if_else(!is.na(Produktionsdatum.x), Produktionsdatum.x, Produktionsdatum.y)) %>% 
-  mutate(failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
-  relocate(id_T32, production_date, part_failure, failure_date) %>% 
-  select(-(5:20)) 
+  mutate(part_T32_failure_date = if_else(!is.na(Fehlerhaft_Datum.x), Fehlerhaft_Datum.x, Fehlerhaft_Datum.y)) %>% 
+  relocate(id_T32, part_T32_failure, part_T32_failure_date) %>% 
+  select(-(4:19)) 
 
 # T33
 part_T33 <- fread("Data/Einzelteil/Einzelteil_T33.csv", header = TRUE, data.table = FALSE) %>% 
   filter(Fehlerhaft == 1) %>% 
-  rename(id_T33 = ID_T33, production_date = Produktionsdatum_Origin_01011970, part_failure = Fehlerhaft, failure_date = Fehlerhaft_Datum) %>% 
-  relocate(id_T33, production_date, part_failure, failure_date) %>% 
-  mutate(production_date = as.IDate(production_date, origin = "1970-01-01")) %>% 
-  select(-(5:10))   
+  rename(id_T33 = ID_T33, part_T33_failure = Fehlerhaft, part_T33_failure_date = Fehlerhaft_Datum) %>% 
+  relocate(id_T33, part_T33_failure, part_T33_failure_date) %>% 
+  select(-(4:10))   
+
+# Remove dummy character string from memory
+rm(txt)
 ```
 
 ## 4 Data Preparation
@@ -561,17 +520,18 @@ In order to get an broad overview of each data set the following functions are a
 **Location of OEM1-plants**
 
 ```{r, message=FALSE, warning = FALSE}
-glimpse(oem_locations)
-```
+# Overview
+#cat("Overview over oem_locations")
+#cat("\n")
+#glimpse(oem_locations)
 
-**Vehicles produced by OEM1**
+# Number of missing values 
+#cat("\n")
+#cat("Number of missing values:", sum(is.na(oem_locations)))
 
-```{r, message=FALSE, warning = FALSE}
-glimpse(vehicle_type11)
-```
-
-```{r, message=FALSE, warning = FALSE}
-glimpse(vehicle_type12)
+# Number of duplicates 
+#cat("\n")
+#cat("Number of duplicates:", sum(duplicated(oem_locations)))
 ```
 
 ### 4.2 Data Cleaning 
@@ -597,9 +557,10 @@ vehicle_type11 <- vehicle_type11 %>%
   mutate(vehicle_production_date = Produktionsdatum) %>% 
   mutate(plant = as.factor(Werksnummer)) %>% 
   mutate(vehicle_failure = as.factor(Fehlerhaft)) %>%
-  mutate(failure_date = Fehlerhaft_Datum) %>%
-  relocate(id_vehicle, plant, vehicle_production_date, vehicle_failure, failure_date) %>%
-  select(-(6:10))
+  mutate(vehicle_failure_date = Fehlerhaft_Datum) %>%
+  mutate(vehicle_type = as.factor("11")) %>%
+  relocate(id_vehicle, vehicle_type, plant, vehicle_production_date, vehicle_failure, vehicle_failure_date) %>%
+  select(-(7:11))
 
 glimpse(vehicle_type11)
 ```
@@ -610,44 +571,458 @@ vehicle_type12 <- vehicle_type12 %>%
   mutate(vehicle_production_date = Produktionsdatum) %>% 
   mutate(plant = as.factor(Werksnummer)) %>% 
   mutate(vehicle_failure = as.factor(Fehlerhaft)) %>%
-  mutate(failure_date = Fehlerhaft_Datum) %>%
-  relocate(id_vehicle, plant, vehicle_production_date, vehicle_failure, failure_date) %>%
-  select(-(6:10))
+  mutate(vehicle_failure_date = Fehlerhaft_Datum) %>%
+  mutate(vehicle_type = as.factor("12")) %>%
+  relocate(id_vehicle, vehicle_type, plant, vehicle_production_date, vehicle_failure, vehicle_failure_date) %>%
+  select(-(7:11))
 
 glimpse(vehicle_type12)
 ```
 
-## 5 Creation of the Final Dataset
+**Built-in components**
 
 ```{r, message=FALSE, warning = FALSE}
+components_in_vehicle_type11 <- components_in_vehicle_type11 %>%
+  mutate(id_body = as.factor(ID_Karosserie)) %>%
+  mutate(id_gearshift = as.factor(ID_Schaltung)) %>%
+  mutate(id_seats = as.factor(ID_Sitze)) %>%
+  mutate(id_engine = as.factor(ID_Motor)) %>%
+  mutate(id_vehicle = as.factor(ID_Fahrzeug)) %>%
+  relocate(id_vehicle, id_body, id_gearshift, id_seats, id_engine) %>%
+  select(-(6:11)) 
 
-#component_K1BE1_and_its_parts <- component_K1BE1 %>%
- #   left_join(parts_in_component_K1BE1, by = c("id_engine" = "ID_K1BE1")) %>% #joined with connection table
-      #join the parts now
-  #    left_join(part_T01, by=c("ID_T1" = "ID_T01.x"), suffix = c("", "_T01")) %>%
-   #   left_join(part_T02, by=c("ID_T2" = "ID_T02.x"), suffix = c("", "_T02")) %>% ## wtf is .y???
-    #  left_join(part_T03, by=c("ID_T3" = "ID_T03"), suffix = c("", "_T03")) %>%
-     # left_join(part_T04, by=c("ID_T4" = "ID_T04"), suffix = c("", "_T04"))# %>%
+glimpse(components_in_vehicle_type11)
+```
 
-      ## jetzt noch überflüssige Spalten entfernen und die Fehler spalten auswerten
+```{r, message=FALSE, warning = FALSE}
+components_in_vehicle_type12 <- components_in_vehicle_type12 %>%
+  mutate(id_body = as.factor(ID_Karosserie)) %>%
+  mutate(id_gearshift = as.factor(ID_Schaltung)) %>%
+  mutate(id_seats = as.factor(ID_Sitze)) %>%
+  mutate(id_engine = as.factor(ID_Motor)) %>%
+  mutate(id_vehicle = as.factor(ID_Fahrzeug)) %>%
+  relocate(id_vehicle, id_body, id_gearshift, id_seats, id_engine) %>%
+  select(-(6:11)) 
 
-     # mutate(Fehlerhaft_total = sum(Fehlerhaft, Fehlerhaft.x, Fehlerhaft.y, Fehlerhaft_T01, Fehlerhaft.x_T02 , Fehlerhaft.y_T02, Fehlerhaft_T03, Fehlerhaft_T04, na.rm=TRUE)) ## ???  
-      
-## das gleiche dann für alle Komponenten
+glimpse(components_in_vehicle_type12)
+```
 
+**Individual components**
 
+```{r, message=FALSE, warning = FALSE}
+# component_K4
+component_K4 <- component_K4 %>%
+  mutate(id_body = as.factor(id_body)) %>%
+  mutate(component_K4_failure = as.factor(component_K4_failure)) 
 
+glimpse(component_K4)
+```
 
-#
-#vehicle_type11_and_components <- vehicle_type11 %>%
- #  inner_join(components_in_vehicle_type11, by = "ID_Fahrzeug") #joined with connection table
-  ## jetzt noch mit left join die Komponenten hinzufügen und die Fehler spalten überprüfen
+```{r, message=FALSE, warning = FALSE}
+# component_K3AG1
+component_K3AG1 <- component_K3AG1 %>%
+  mutate(id_gearshift = as.factor(id_gearshift)) %>%
+  mutate(component_K3AG1_failure = as.factor(component_K3AG1_failure)) 
 
-#vehicle_type12_and_components <- vehicle_type12 %>%
- #  inner_join(components_in_vehicle_type12, by = "ID_Fahrzeug") #joined with connection table
-  ## jetzt noch mit left join die Komponenten hinzufügen und die Fehler spalten überprüfen
+glimpse(component_K3AG1)
+```
 
+```{r, message=FALSE, warning = FALSE}
+# component_K3SG1
+component_K3SG1 <- component_K3SG1 %>%
+  mutate(id_gearshift = as.factor(id_gearshift)) %>%
+  mutate(component_K3SG1_failure = as.factor(component_K3SG1_failure)) 
 
+glimpse(component_K3SG1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# component_K2LE1
+component_K2LE1 <- component_K2LE1 %>%
+  mutate(id_seats = as.factor(id_seats)) %>%
+  mutate(component_K2LE1_failure = as.factor(component_K2LE1_failure)) 
+
+glimpse(component_K2LE1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# component_K2ST1
+component_K2ST1 <- component_K2ST1 %>%
+  mutate(id_seats = as.factor(id_seats)) %>%
+  mutate(component_K2ST1_failure = as.factor(component_K2ST1_failure)) 
+
+glimpse(component_K2ST1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# component_K1BE1
+component_K1BE1 <- component_K1BE1 %>%
+  mutate(id_engine = as.factor(id_engine)) %>%
+  mutate(component_K1BE1_failure = as.factor(component_K1BE1_failure)) 
+
+glimpse(component_K1BE1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# component_K1DI1
+component_K1DI1 <- component_K1DI1 %>%
+  mutate(id_engine = as.factor(id_engine)) %>%
+  mutate(component_K1DI1_failure = as.factor(component_K1DI1_failure)) 
+
+glimpse(component_K1DI1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# component_K5
+component_K5 <- component_K5 %>%
+  mutate(id_body = as.factor(id_body)) %>%
+  mutate(component_K5_failure = as.factor(component_K5_failure)) 
+
+glimpse(component_K5)
+```
+
+**Parts in components**
+
+```{r, message=FALSE, warning = FALSE}
+# parts_in_component_K1BE1
+parts_in_component_K1BE1 <- parts_in_component_K1BE1 %>%
+  mutate(id_T01 = as.factor(ID_T1)) %>%
+  mutate(id_T02 = as.factor(ID_T2)) %>%
+  mutate(id_T03 = as.factor(ID_T3)) %>%
+  mutate(id_T04 = as.factor(ID_T4)) %>%
+  mutate(id_K1BE1 = as.factor(ID_K1BE1)) %>%
+  relocate(id_K1BE1, id_T01, id_T02, id_T03, id_T04) %>% 
+  select(-(6:11))
+
+glimpse(parts_in_component_K1BE1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# parts_in_component_K1DI1
+parts_in_component_K1DI1 <- parts_in_component_K1DI1 %>%
+  mutate(id_T01 = as.factor(ID_T1)) %>%
+  mutate(id_T02 = as.factor(ID_T2)) %>%
+  mutate(id_T05 = as.factor(ID_T5)) %>%
+  mutate(id_T06 = as.factor(ID_T6)) %>%
+  mutate(id_K1DI1 = as.factor(ID_K1DI1)) %>%
+  relocate(id_K1DI1, id_T01, id_T02, id_T05, id_T06) %>% 
+  select(-(6:11))
+
+glimpse(parts_in_component_K1DI1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# parts_in_component_K2LE1
+parts_in_component_K2LE1 <- parts_in_component_K2LE1 %>%
+  mutate(id_T11 = as.factor(ID_T11)) %>%
+  mutate(id_T14 = as.factor(ID_T14)) %>%
+  mutate(id_T15 = as.factor(ID_T15)) %>%
+  mutate(id_K2LE1 = as.factor(ID_K2LE1)) %>%
+  relocate(id_K2LE1, id_T11, id_T14, id_T15) %>% 
+  select(-(5:9))
+
+glimpse(parts_in_component_K2LE1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# parts_in_component_K2ST1
+parts_in_component_K2ST1 <- parts_in_component_K2ST1 %>%
+  mutate(id_T11 = as.factor(ID_T11)) %>%
+  mutate(id_T12 = as.factor(ID_T12)) %>%
+  mutate(id_T13 = as.factor(ID_T13)) %>%
+  mutate(id_K2ST1 = as.factor(ID_K2ST1)) %>%
+  relocate(id_K2ST1, id_T11, id_T12, id_T13) %>% 
+  select(-(5:10))
+
+glimpse(parts_in_component_K2ST1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# parts_in_component_K3AG1
+parts_in_component_K3AG1 <- parts_in_component_K3AG1 %>%
+  mutate(id_T21 = as.factor(ID_T21)) %>%
+  mutate(id_T24 = as.factor(ID_T24)) %>%
+  mutate(id_T25 = as.factor(ID_T25)) %>%
+  mutate(id_K3AG1 = as.factor(ID_K3AG1)) %>%
+  relocate(id_K3AG1, id_T21, id_T24, id_T25) %>% 
+  select(-(5:9))
+
+glimpse(parts_in_component_K3AG1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# parts_in_component_K3SG1
+parts_in_component_K3SG1 <- parts_in_component_K3SG1 %>%
+  mutate(id_T21 = as.factor(ID_T21)) %>%
+  mutate(id_T22 = as.factor(ID_T22)) %>%
+  mutate(id_T23 = as.factor(ID_T23)) %>%
+  mutate(id_K3SG1 = as.factor(ID_K3SG1)) %>%
+  relocate(id_K3SG1, id_T21, id_T22, id_T23) %>% 
+  select(-(5:9))
+
+glimpse(parts_in_component_K3SG1)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# parts_in_component_K4
+parts_in_component_K4 <- parts_in_component_K4 %>%
+  mutate(id_T30 = as.factor(ID_T30)) %>%
+  mutate(id_T31 = as.factor(ID_T31)) %>%
+  mutate(id_T32 = as.factor(ID_T32)) %>%
+  mutate(id_K4 = as.factor(ID_K4)) %>%
+  relocate(id_K4, id_T30, id_T31, id_T32) %>% 
+  select(-(5:9))
+
+glimpse(parts_in_component_K4)
+```
+
+```{r, message=FALSE, warning = FALSE}
+# parts_in_component_K5
+parts_in_component_K5 <- parts_in_component_K5 %>%
+  mutate(id_T30 = as.factor(ID_T30)) %>%
+  mutate(id_T31 = as.factor(ID_T31)) %>%
+  mutate(id_T33 = as.factor(ID_T33)) %>%
+  mutate(id_K5 = as.factor(ID_K5)) %>%
+  relocate(id_K5, id_T30, id_T31, id_T33) %>% 
+  select(-(5:9))
+
+glimpse(parts_in_component_K5)
+```
+
+**Individual parts**
+
+```{r, message=FALSE, warning = FALSE}
+part_T01 <- part_T01 %>% 
+  mutate(id_T01 = as.factor(id_T01)) %>% 
+  mutate(part_T01_failure = as.factor(part_T01_failure))
+
+glimpse(part_T01)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T02 <- part_T02 %>% 
+  mutate(id_T02 = as.factor(id_T02)) %>% 
+  mutate(part_T02_failure = as.factor(part_T02_failure))
+
+glimpse(part_T02)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T03 <- part_T03 %>% 
+  mutate(id_T03 = as.factor(id_T03)) %>% 
+  mutate(part_T03_failure = as.factor(part_T03_failure))
+
+glimpse(part_T03)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T04 <- part_T04 %>% 
+  mutate(id_T04 = as.factor(id_T04)) %>% 
+  mutate(part_T04_failure = as.factor(part_T04_failure))
+
+glimpse(part_T04)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T05 <- part_T05 %>% 
+  mutate(id_T05 = as.factor(id_T05)) %>% 
+  mutate(part_T05_failure = as.factor(part_T05_failure))
+
+glimpse(part_T05)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T06 <- part_T06 %>% 
+  mutate(id_T06 = as.factor(id_T06)) %>% 
+  mutate(part_T05_failure = as.factor(part_T05_failure))
+
+glimpse(part_T06)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T11 <- part_T11 %>% 
+  mutate(id_T11 = as.factor(id_T11)) %>% 
+  mutate(part_T11_failure = as.factor(part_T11_failure))
+
+glimpse(part_T11)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T12 <- part_T12 %>% 
+  mutate(id_T12 = as.factor(id_T12)) %>% 
+  mutate(part_T12_failure = as.factor(part_T12_failure))
+
+glimpse(part_T12)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T13 <- part_T13 %>% 
+  mutate(id_T13 = as.factor(id_T13)) %>% 
+  mutate(part_T13_failure = as.factor(part_T13_failure))
+
+glimpse(part_T13)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T14 <- part_T14 %>% 
+  mutate(id_T14 = as.factor(id_T14)) %>% 
+  mutate(part_T14_failure = as.factor(part_T14_failure))
+
+glimpse(part_T14)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T15 <- part_T15 %>% 
+  mutate(id_T15 = as.factor(id_T15)) %>% 
+  mutate(part_T15_failure = as.factor(part_T15_failure))
+
+glimpse(part_T15)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T21 <- part_T21 %>% 
+  mutate(id_T21 = as.factor(id_T21)) %>% 
+  mutate(part_T21_failure = as.factor(part_T21_failure))
+
+glimpse(part_T21)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T22 <- part_T22 %>% 
+  mutate(id_T22 = as.factor(id_T22)) %>% 
+  mutate(part_T22_failure = as.factor(part_T22_failure))
+
+glimpse(part_T22)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T23 <- part_T23 %>% 
+  mutate(id_T23 = as.factor(id_T23)) %>% 
+  mutate(part_T23_failure = as.factor(part_T23_failure))
+
+glimpse(part_T23)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T24 <- part_T24 %>% 
+  mutate(id_T24 = as.factor(id_T24)) %>% 
+  mutate(part_T24_failure = as.factor(part_T24_failure))
+
+glimpse(part_T24)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T25 <- part_T25 %>% 
+  mutate(id_T25 = as.factor(id_T25)) %>% 
+  mutate(part_T25_failure = as.factor(part_T25_failure))
+
+glimpse(part_T25)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T30 <- part_T30 %>% 
+  mutate(id_T30 = as.factor(id_T30)) %>% 
+  mutate(part_T30_failure = as.factor(part_T30_failure))
+
+glimpse(part_T30)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T31 <- part_T31 %>% 
+  mutate(id_T31 = as.factor(id_T31)) %>% 
+  mutate(part_T31_failure = as.factor(part_T31_failure))
+
+glimpse(part_T31)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T32 <- part_T32 %>% 
+  mutate(id_T32 = as.factor(id_T32)) %>% 
+  mutate(part_T32_failure = as.factor(part_T32_failure))
+
+glimpse(part_T32)
+```
+
+```{r, message=FALSE, warning = FALSE}
+part_T33 <- part_T33 %>% 
+  mutate(id_T33 = as.factor(id_T33)) %>% 
+  mutate(part_T33_failure = as.factor(part_T33_failure))
+
+glimpse(part_T33)
+```
+
+## 5 Generation of the Final Dataset
+
+```{r, message=FALSE, warning = FALSE}
+all_vehicles <- rbind(vehicle_type11, vehicle_type12)
+#rm(vehicle_type11, vehicle_type12)
+
+all_components_in_vehicles <- rbind(components_in_vehicle_type11, components_in_vehicle_type12)
+#rm(components_in_vehicle_type11, components_in_vehicle_type12)
+
+data <- all_vehicles %>% 
+  left_join(oem_locations, by = "plant") %>%
+  left_join(all_components_in_vehicles, by = "id_vehicle") %>%
+  left_join(component_K1BE1, by = "id_engine") %>%
+  left_join(component_K1DI1, by = "id_engine") %>%
+  left_join(component_K2LE1, by = "id_seats") %>%
+  left_join(component_K2ST1, by = "id_seats") %>%
+  left_join(component_K3AG1, by = "id_gearshift") %>%
+  left_join(component_K3SG1, by = "id_gearshift") %>%
+  left_join(component_K4, by = "id_body") %>%
+  left_join(component_K5, by = "id_body") 
+
+parts_in_component_K1BE1 <- parts_in_component_K1BE1 %>%
+  left_join(part_T01, by = "id_T01") %>%
+  left_join(part_T02, by = "id_T02") %>%
+  left_join(part_T03, by = "id_T03") %>%
+  left_join(part_T04, by = "id_T04") 
+
+parts_in_component_K1DI1 <- parts_in_component_K1DI1 %>%
+  left_join(part_T01, by = "id_T01") %>%
+  left_join(part_T02, by = "id_T02") %>%
+  left_join(part_T05, by = "id_T05") %>%
+  left_join(part_T06, by = "id_T06")
+
+parts_in_component_K2LE1 <- parts_in_component_K2LE1 %>%
+  left_join(part_T11, by = "id_T11") %>%
+  left_join(part_T14, by = "id_T14") %>%
+  left_join(part_T15, by = "id_T15") 
+
+parts_in_component_K2ST1 <- parts_in_component_K2ST1 %>%
+  left_join(part_T11, by = "id_T11") %>%
+  left_join(part_T12, by = "id_T12") %>%
+  left_join(part_T13, by = "id_T13") 
+
+parts_in_component_K3AG1 <- parts_in_component_K3AG1 %>%
+  left_join(part_T21, by = "id_T21") %>%
+  left_join(part_T24, by = "id_T24") %>%
+  left_join(part_T25, by = "id_T25") 
+
+parts_in_component_K3SG1 <- parts_in_component_K3SG1 %>%
+  left_join(part_T21, by = "id_T21") %>%
+  left_join(part_T22, by = "id_T22") %>%
+  left_join(part_T23, by = "id_T23") 
+
+parts_in_component_K4 <- parts_in_component_K4 %>%
+  left_join(part_T30, by = "id_T30") %>%
+  left_join(part_T31, by = "id_T31") %>%
+  left_join(part_T32, by = "id_T32") 
+
+parts_in_component_K5 <- parts_in_component_K5 %>%
+  left_join(part_T30, by = "id_T30") %>%
+  left_join(part_T31, by = "id_T31") %>%
+  left_join(part_T33, by = "id_T33") 
+
+data2 <- data %>%
+  left_join(parts_in_component_K1BE1, by = c("id_body" = "id_K1BE1")) %>%
+  left_join(parts_in_component_K1DI1, by = c("id_engine" = "id_K1DI1")) %>%
+  left_join(parts_in_component_K2LE1, by = c("id_seats" = "id_K2LE1")) %>%
+  left_join(parts_in_component_K2ST1, by = c("id_seats" = "id_K2ST1")) %>%
+  left_join(parts_in_component_K3AG1, by = c("id_gearshift" = "id_K3AG1")) %>%
+  left_join(parts_in_component_K3SG1, by = c("id_gearshift" = "id_K3SG1")) %>%
+  left_join(parts_in_component_K4, by = c("id_body" = "id_K4")) %>%
+  left_join(parts_in_component_K5, by = c("id_body" = "id_K5")) 
 ```
 
 ## 6 Evaluation
