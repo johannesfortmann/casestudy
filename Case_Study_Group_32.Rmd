@@ -621,6 +621,33 @@ glimpse(vehicle_type12)
 
 ```{r, message=FALSE, warning = FALSE}
 
+component_K1BE1_and_its_parts <- component_K1BE1 %>%
+    left_join(parts_in_component_K1BE1, by = c("id_engine" = "ID_K1BE1")) %>% #joined with connection table
+      #join the parts now
+      left_join(part_T01, by=c("ID_T1" = "ID_T01.x"), suffix = c("", "_T01")) %>%
+      left_join(part_T02, by=c("ID_T2" = "ID_T02.x"), suffix = c("", "_T02")) %>% ## wtf is .y???
+      left_join(part_T03, by=c("ID_T3" = "ID_T03"), suffix = c("", "_T03")) %>%
+      left_join(part_T04, by=c("ID_T4" = "ID_T04"), suffix = c("", "_T04"))# %>%
+
+      ## jetzt noch überflüssige Spalten entfernen und die Fehler spalten auswerten
+
+     # mutate(Fehlerhaft_total = sum(Fehlerhaft, Fehlerhaft.x, Fehlerhaft.y, Fehlerhaft_T01, Fehlerhaft.x_T02 , Fehlerhaft.y_T02, Fehlerhaft_T03, Fehlerhaft_T04, na.rm=TRUE)) ## ???  
+      
+## das gleiche dann für alle Komponenten
+
+
+
+
+#
+vehicle_type11_and_components <- vehicle_type11 %>%
+   inner_join(components_in_vehicle_type11, by = "ID_Fahrzeug") #joined with connection table
+  ## jetzt noch mit left join die Komponenten hinzufügen und die Fehler spalten überprüfen
+
+vehicle_type12_and_components <- vehicle_type12 %>%
+   inner_join(components_in_vehicle_type12, by = "ID_Fahrzeug") #joined with connection table
+  ## jetzt noch mit left join die Komponenten hinzufügen und die Fehler spalten überprüfen
+
+
 ```
 
 ## 6 Evaluation
