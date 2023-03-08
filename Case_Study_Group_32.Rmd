@@ -1070,13 +1070,15 @@ final_data <- all_vehicles %>%
   left_join(test2_all_parts_in_components, by = "id_vehicle") %>%
   mutate(is_failure = if_else(vehicle_failure > 0, 1, if_else(part_or_component_failure > 0, 1, 0))) %>% 
   replace_na(list(is_failure = 0)) %>% 
+  mutate(is_failure = as.factor(is_failure)) %>%
+  mutate(vehicle_failure = as.factor(vehicle_failure)) %>%
   mutate(earliest_failure_date = pmin(vehicle_failure_date, earliest_part_or_component_failure_date, na.rm = TRUE)) %>% 
   select(-c(earliest_part_or_component_failure_date, part_or_component_failure)) %>% 
   mutate(vehicle_lifespan = if_else(!is.na(vehicle_failure_date), as.numeric(difftime(vehicle_failure_date, vehicle_production_date)), NA)) %>% 
   left_join(oem_locations, by = "plant") %>% 
   relocate(id_vehicle, vehicle_type, plant, location, latitude, longitude, vehicle_production_date, vehicle_failure, vehicle_failure_date, vehicle_lifespan, is_failure, earliest_failure_date) 
 
-fwrite(final_data, file ="final_data.csv")
+fwrite(final_data, file ="Final_dataset_group_32.csv")
 
 ```
 
