@@ -6,7 +6,11 @@ if(!require("install.load")){
 library(install.load)
 
 ## noch durch die benötigten Pakete zu ersetzen
-install_load("shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets") 
+install_load("readr","shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets") 
+
+#load the data
+final_data <- read.csv("all_vehicles.csv")
+
 
 
 
@@ -24,9 +28,10 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
   sidebarLayout(
     sidebarPanel(
       
-      ##INPUT HERE
-      dateInput("zensierungsdatum", "Zensierungsdatum der Analyse" ),
-      dateRangeInput("produktionszeitraum", "Produktionszeitraum der Fahrzeuge"),
+      
+      dateInput("zensierungsdatum", "Zensierungsdatum der Analyse", value = max(final_data$vehicle_failure_date )),
+      #input for production period
+      dateRangeInput("production_period", "Production period of the vehicles", start = min(final_data$vehicle_production_date), max(final_data$vehicle_production_date)),
       
       
       
@@ -35,9 +40,9 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
       checkboxGroupButtons(
         
         
-        inputId = "fahrzeugtyp_auswahl",
-        label = "Auswahl an betrachteten Fahrzeugtypen",
-        choices = c("Option 1", "Option 2", "Option 3", "Option 4"),
+        inputId = "selected_vehicle_type",
+        label = "Choose the vehicle type",
+        choices = c("Type 11", "Type 12"),
         individual = TRUE,
         checkIcon = list(
           yes = tags$i(class = "fa fa-circle", style = "color: Lightsteelblue"),
@@ -66,6 +71,10 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
 
 # Define server logic
 server <- function(input, output) {
+    
+  #adjust the data to the selected values
+  selected_data <- final_data# %>%
+  #  filter(vehicle_production_date>production_period[1]) 
   
   
   
