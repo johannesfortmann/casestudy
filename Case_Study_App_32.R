@@ -29,7 +29,7 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
     sidebarPanel(
       
       
-      dateInput("zensierungsdatum", "Zensierungsdatum der Analyse", value = max(final_data$vehicle_failure_date )),
+      dateInput("censoring date", "Censoring date of the analysis", value = max(final_data$vehicle_failure_date )), ##hier earliest_failure_date 
       #input for production period
       dateRangeInput("production_period", "Production period of the vehicles", start = min(final_data$vehicle_production_date), max(final_data$vehicle_production_date)),
       
@@ -57,11 +57,11 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
       
       ##OUTPUT HERE
       tabsetPanel(
-        tabPanel("Karte",
+        tabPanel("Map",
                  leafletOutput("map")),
         tabPanel("Plot",   
                  plotOutput("plot")),
-        tabPanel("Tabelle",
+        tabPanel("Table",
                  tableOutput("table"))
       )
     )
