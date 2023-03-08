@@ -556,7 +556,7 @@ vehicle_type11 <- vehicle_type11 %>%
   mutate(id_vehicle = as.factor(ID_Fahrzeug)) %>% 
   mutate(vehicle_production_date = Produktionsdatum) %>% 
   mutate(plant = as.factor(Werksnummer)) %>% 
-  mutate(vehicle_failure = as.factor(Fehlerhaft)) %>%
+  mutate(vehicle_failure = Fehlerhaft) %>%
   mutate(vehicle_failure_date = Fehlerhaft_Datum) %>%
   mutate(vehicle_type = as.factor("11")) %>%
   relocate(id_vehicle, vehicle_type, plant, vehicle_production_date, vehicle_failure, vehicle_failure_date) %>%
@@ -570,7 +570,7 @@ vehicle_type12 <- vehicle_type12 %>%
   mutate(id_vehicle = as.factor(ID_Fahrzeug)) %>% 
   mutate(vehicle_production_date = Produktionsdatum) %>% 
   mutate(plant = as.factor(Werksnummer)) %>% 
-  mutate(vehicle_failure = as.factor(Fehlerhaft)) %>%
+  mutate(vehicle_failure = Fehlerhaft) %>%
   mutate(vehicle_failure_date = Fehlerhaft_Datum) %>%
   mutate(vehicle_type = as.factor("12")) %>%
   relocate(id_vehicle, vehicle_type, plant, vehicle_production_date, vehicle_failure, vehicle_failure_date) %>%
@@ -612,8 +612,7 @@ glimpse(components_in_vehicle_type12)
 ```{r, message=FALSE, warning = FALSE}
 # component_K4
 component_K4 <- component_K4 %>%
-  mutate(id_body = as.factor(id_body)) %>%
-  mutate(component_K4_failure = as.factor(component_K4_failure)) 
+  mutate(id_body = as.factor(id_body)) 
 
 glimpse(component_K4)
 ```
@@ -621,8 +620,7 @@ glimpse(component_K4)
 ```{r, message=FALSE, warning = FALSE}
 # component_K3AG1
 component_K3AG1 <- component_K3AG1 %>%
-  mutate(id_gearshift = as.factor(id_gearshift)) %>%
-  mutate(component_K3AG1_failure = as.factor(component_K3AG1_failure)) 
+  mutate(id_gearshift = as.factor(id_gearshift)) 
 
 glimpse(component_K3AG1)
 ```
@@ -630,8 +628,7 @@ glimpse(component_K3AG1)
 ```{r, message=FALSE, warning = FALSE}
 # component_K3SG1
 component_K3SG1 <- component_K3SG1 %>%
-  mutate(id_gearshift = as.factor(id_gearshift)) %>%
-  mutate(component_K3SG1_failure = as.factor(component_K3SG1_failure)) 
+  mutate(id_gearshift = as.factor(id_gearshift)) 
 
 glimpse(component_K3SG1)
 ```
@@ -639,8 +636,7 @@ glimpse(component_K3SG1)
 ```{r, message=FALSE, warning = FALSE}
 # component_K2LE1
 component_K2LE1 <- component_K2LE1 %>%
-  mutate(id_seats = as.factor(id_seats)) %>%
-  mutate(component_K2LE1_failure = as.factor(component_K2LE1_failure)) 
+  mutate(id_seats = as.factor(id_seats)) 
 
 glimpse(component_K2LE1)
 ```
@@ -648,8 +644,7 @@ glimpse(component_K2LE1)
 ```{r, message=FALSE, warning = FALSE}
 # component_K2ST1
 component_K2ST1 <- component_K2ST1 %>%
-  mutate(id_seats = as.factor(id_seats)) %>%
-  mutate(component_K2ST1_failure = as.factor(component_K2ST1_failure)) 
+  mutate(id_seats = as.factor(id_seats)) 
 
 glimpse(component_K2ST1)
 ```
@@ -657,8 +652,7 @@ glimpse(component_K2ST1)
 ```{r, message=FALSE, warning = FALSE}
 # component_K1BE1
 component_K1BE1 <- component_K1BE1 %>%
-  mutate(id_engine = as.factor(id_engine)) %>%
-  mutate(component_K1BE1_failure = as.factor(component_K1BE1_failure)) 
+  mutate(id_engine = as.factor(id_engine)) 
 
 glimpse(component_K1BE1)
 ```
@@ -666,8 +660,7 @@ glimpse(component_K1BE1)
 ```{r, message=FALSE, warning = FALSE}
 # component_K1DI1
 component_K1DI1 <- component_K1DI1 %>%
-  mutate(id_engine = as.factor(id_engine)) %>%
-  mutate(component_K1DI1_failure = as.factor(component_K1DI1_failure)) 
+  mutate(id_engine = as.factor(id_engine)) 
 
 glimpse(component_K1DI1)
 ```
@@ -675,8 +668,7 @@ glimpse(component_K1DI1)
 ```{r, message=FALSE, warning = FALSE}
 # component_K5
 component_K5 <- component_K5 %>%
-  mutate(id_body = as.factor(id_body)) %>%
-  mutate(component_K5_failure = as.factor(component_K5_failure)) 
+  mutate(id_body = as.factor(id_body)) 
 
 glimpse(component_K5)
 ```
@@ -793,160 +785,140 @@ glimpse(parts_in_component_K5)
 
 ```{r, message=FALSE, warning = FALSE}
 part_T01 <- part_T01 %>% 
-  mutate(id_T01 = as.factor(id_T01)) %>% 
-  mutate(part_T01_failure = as.factor(part_T01_failure))
+  mutate(id_T01 = as.factor(id_T01)) 
 
 glimpse(part_T01)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T02 <- part_T02 %>% 
-  mutate(id_T02 = as.factor(id_T02)) %>% 
-  mutate(part_T02_failure = as.factor(part_T02_failure))
+  mutate(id_T02 = as.factor(id_T02)) 
 
 glimpse(part_T02)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T03 <- part_T03 %>% 
-  mutate(id_T03 = as.factor(id_T03)) %>% 
-  mutate(part_T03_failure = as.factor(part_T03_failure))
+  mutate(id_T03 = as.factor(id_T03)) 
 
 glimpse(part_T03)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T04 <- part_T04 %>% 
-  mutate(id_T04 = as.factor(id_T04)) %>% 
-  mutate(part_T04_failure = as.factor(part_T04_failure))
+  mutate(id_T04 = as.factor(id_T04)) 
 
 glimpse(part_T04)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T05 <- part_T05 %>% 
-  mutate(id_T05 = as.factor(id_T05)) %>% 
-  mutate(part_T05_failure = as.factor(part_T05_failure))
+  mutate(id_T05 = as.factor(id_T05)) 
 
 glimpse(part_T05)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T06 <- part_T06 %>% 
-  mutate(id_T06 = as.factor(id_T06)) %>% 
-  mutate(part_T05_failure = as.factor(part_T05_failure))
+  mutate(id_T06 = as.factor(id_T06)) 
 
 glimpse(part_T06)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T11 <- part_T11 %>% 
-  mutate(id_T11 = as.factor(id_T11)) %>% 
-  mutate(part_T11_failure = as.factor(part_T11_failure))
+  mutate(id_T11 = as.factor(id_T11)) 
 
 glimpse(part_T11)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T12 <- part_T12 %>% 
-  mutate(id_T12 = as.factor(id_T12)) %>% 
-  mutate(part_T12_failure = as.factor(part_T12_failure))
+  mutate(id_T12 = as.factor(id_T12)) 
 
 glimpse(part_T12)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T13 <- part_T13 %>% 
-  mutate(id_T13 = as.factor(id_T13)) %>% 
-  mutate(part_T13_failure = as.factor(part_T13_failure))
+  mutate(id_T13 = as.factor(id_T13)) 
 
 glimpse(part_T13)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T14 <- part_T14 %>% 
-  mutate(id_T14 = as.factor(id_T14)) %>% 
-  mutate(part_T14_failure = as.factor(part_T14_failure))
+  mutate(id_T14 = as.factor(id_T14)) 
 
 glimpse(part_T14)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T15 <- part_T15 %>% 
-  mutate(id_T15 = as.factor(id_T15)) %>% 
-  mutate(part_T15_failure = as.factor(part_T15_failure))
+  mutate(id_T15 = as.factor(id_T15)) 
 
 glimpse(part_T15)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T21 <- part_T21 %>% 
-  mutate(id_T21 = as.factor(id_T21)) %>% 
-  mutate(part_T21_failure = as.factor(part_T21_failure))
+  mutate(id_T21 = as.factor(id_T21)) 
 
 glimpse(part_T21)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T22 <- part_T22 %>% 
-  mutate(id_T22 = as.factor(id_T22)) %>% 
-  mutate(part_T22_failure = as.factor(part_T22_failure))
+  mutate(id_T22 = as.factor(id_T22)) 
 
 glimpse(part_T22)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T23 <- part_T23 %>% 
-  mutate(id_T23 = as.factor(id_T23)) %>% 
-  mutate(part_T23_failure = as.factor(part_T23_failure))
+  mutate(id_T23 = as.factor(id_T23)) 
 
 glimpse(part_T23)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T24 <- part_T24 %>% 
-  mutate(id_T24 = as.factor(id_T24)) %>% 
-  mutate(part_T24_failure = as.factor(part_T24_failure))
+  mutate(id_T24 = as.factor(id_T24)) 
 
 glimpse(part_T24)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T25 <- part_T25 %>% 
-  mutate(id_T25 = as.factor(id_T25)) %>% 
-  mutate(part_T25_failure = as.factor(part_T25_failure))
+  mutate(id_T25 = as.factor(id_T25)) 
 
 glimpse(part_T25)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T30 <- part_T30 %>% 
-  mutate(id_T30 = as.factor(id_T30)) %>% 
-  mutate(part_T30_failure = as.factor(part_T30_failure))
+  mutate(id_T30 = as.factor(id_T30)) 
 
 glimpse(part_T30)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T31 <- part_T31 %>% 
-  mutate(id_T31 = as.factor(id_T31)) %>% 
-  mutate(part_T31_failure = as.factor(part_T31_failure))
+  mutate(id_T31 = as.factor(id_T31)) 
 
 glimpse(part_T31)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T32 <- part_T32 %>% 
-  mutate(id_T32 = as.factor(id_T32)) %>% 
-  mutate(part_T32_failure = as.factor(part_T32_failure))
+  mutate(id_T32 = as.factor(id_T32)) 
 
 glimpse(part_T32)
 ```
 
 ```{r, message=FALSE, warning = FALSE}
 part_T33 <- part_T33 %>% 
-  mutate(id_T33 = as.factor(id_T33)) %>% 
-  mutate(part_T33_failure = as.factor(part_T33_failure))
+  mutate(id_T33 = as.factor(id_T33)) 
 
 glimpse(part_T33)
 ```
@@ -955,14 +927,12 @@ glimpse(part_T33)
 
 ```{r, message=FALSE, warning = FALSE}
 all_vehicles <- rbind(vehicle_type11, vehicle_type12)
-#rm(vehicle_type11, vehicle_type12)
+# #rm(vehicle_type11, vehicle_type12)
 
 all_components_in_vehicles <- rbind(components_in_vehicle_type11, components_in_vehicle_type12)
-#rm(components_in_vehicle_type11, components_in_vehicle_type12)
+# #rm(components_in_vehicle_type11, components_in_vehicle_type12)
 
-data <- all_vehicles %>% 
-  left_join(oem_locations, by = "plant") %>%
-  left_join(all_components_in_vehicles, by = "id_vehicle") %>%
+all_components_in_vehicles <- all_components_in_vehicles %>%
   left_join(component_K1BE1, by = "id_engine") %>%
   left_join(component_K1DI1, by = "id_engine") %>%
   left_join(component_K2LE1, by = "id_seats") %>%
@@ -970,7 +940,16 @@ data <- all_vehicles %>%
   left_join(component_K3AG1, by = "id_gearshift") %>%
   left_join(component_K3SG1, by = "id_gearshift") %>%
   left_join(component_K4, by = "id_body") %>%
-  left_join(component_K5, by = "id_body") 
+  left_join(component_K5, by = "id_body") %>%
+  mutate(component_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(component_K1BE1_failure, component_K1DI1_failure, component_K2LE1_failure, component_K2ST1_failure, component_K3AG1_failure, component_K3SG1_failure, component_K4_failure, component_K5_failure)) %>%
+  filter(component_failure > 0) %>%
+  mutate(earliest_component_failure_date = pmin(component_K1BE1_failure_date, component_K1DI1_failure_date, component_K2LE1_failure_date, component_K2ST1_failure_date, component_K3AG1_failure_date, component_K3SG1_failure_date, component_K4_failure_date, component_K5_failure_date, na.rm = TRUE)) %>%
+  select(-c(component_K1BE1_failure_date, component_K1DI1_failure_date, component_K2LE1_failure_date, component_K2ST1_failure_date, component_K3AG1_failure_date, component_K3SG1_failure_date, component_K4_failure_date, component_K5_failure_date)) %>% 
+  relocate(id_vehicle, component_failure, earliest_component_failure_date)
+
+# Dummy to work with   
+test_all_components_in_vehicles <- all_components_in_vehicles
 
 parts_in_component_K1BE1 <- parts_in_component_K1BE1 %>%
   left_join(part_T01, by = "id_T01") %>%
@@ -978,51 +957,127 @@ parts_in_component_K1BE1 <- parts_in_component_K1BE1 %>%
   left_join(part_T03, by = "id_T03") %>%
   left_join(part_T04, by = "id_T04") 
 
+parts_in_component_K1BE1 <- parts_in_component_K1BE1 %>%
+  select(-(2:5)) %>%
+  mutate(part_in_K1BE1_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(part_T01_failure, part_T02_failure, part_T03_failure, part_T04_failure)) %>% 
+  mutate(earliest_part_in_K1BE1_failure_date = pmin(part_T01_failure_date, part_T02_failure_date, part_T03_failure_date, part_T04_failure_date, na.rm = TRUE)) %>%
+  select(-c(part_T01_failure_date, part_T02_failure_date, part_T03_failure_date, part_T04_failure_date)) 
+
 parts_in_component_K1DI1 <- parts_in_component_K1DI1 %>%
   left_join(part_T01, by = "id_T01") %>%
   left_join(part_T02, by = "id_T02") %>%
   left_join(part_T05, by = "id_T05") %>%
   left_join(part_T06, by = "id_T06")
 
+parts_in_component_K1DI1 <- parts_in_component_K1DI1 %>%
+  select(-(2:5)) %>%
+  mutate(part_in_K1DI1_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(part_T01_failure, part_T02_failure, part_T05_failure, part_T06_failure)) %>% 
+  mutate(earliest_part_in_K1DI1_failure_date = pmin(part_T01_failure_date, part_T02_failure_date, part_T05_failure_date, part_T06_failure_date, na.rm = TRUE)) %>%
+  select(-c(part_T01_failure_date, part_T02_failure_date, part_T05_failure_date, part_T06_failure_date)) 
+
 parts_in_component_K2LE1 <- parts_in_component_K2LE1 %>%
   left_join(part_T11, by = "id_T11") %>%
   left_join(part_T14, by = "id_T14") %>%
-  left_join(part_T15, by = "id_T15") 
+  left_join(part_T15, by = "id_T15")
+
+parts_in_component_K2LE1 <- parts_in_component_K2LE1 %>%
+  select(-(2:4)) %>%
+  mutate(part_in_K2LE1_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(part_T11_failure, part_T14_failure, part_T15_failure)) %>% 
+  mutate(earliest_part_in_K2LE1_failure_date = pmin(part_T11_failure_date, part_T14_failure_date, part_T15_failure_date, na.rm = TRUE)) %>%
+  select(-c(part_T11_failure_date, part_T14_failure_date, part_T15_failure_date)) 
 
 parts_in_component_K2ST1 <- parts_in_component_K2ST1 %>%
   left_join(part_T11, by = "id_T11") %>%
   left_join(part_T12, by = "id_T12") %>%
-  left_join(part_T13, by = "id_T13") 
+  left_join(part_T13, by = "id_T13")
+
+parts_in_component_K2ST1 <- parts_in_component_K2ST1 %>%
+  select(-(2:4)) %>%
+  mutate(part_in_K2ST1_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(part_T11_failure, part_T12_failure, part_T13_failure)) %>% 
+  mutate(earliest_part_in_K2ST1_failure_date = pmin(part_T11_failure_date, part_T12_failure_date, part_T13_failure_date, na.rm = TRUE)) %>%
+  select(-c(part_T11_failure_date, part_T12_failure_date, part_T13_failure_date)) 
 
 parts_in_component_K3AG1 <- parts_in_component_K3AG1 %>%
   left_join(part_T21, by = "id_T21") %>%
   left_join(part_T24, by = "id_T24") %>%
-  left_join(part_T25, by = "id_T25") 
+  left_join(part_T25, by = "id_T25")
+
+parts_in_component_K3AG1 <- parts_in_component_K3AG1 %>%
+  select(-(2:4)) %>%
+  mutate(part_in_K3AG1_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(part_T21_failure, part_T24_failure, part_T25_failure)) %>% 
+  mutate(earliest_part_in_K3AG1_failure_date = pmin(part_T21_failure_date, part_T24_failure_date, part_T25_failure_date, na.rm = TRUE)) %>%
+  select(-c(part_T21_failure_date, part_T24_failure_date, part_T25_failure_date)) 
 
 parts_in_component_K3SG1 <- parts_in_component_K3SG1 %>%
   left_join(part_T21, by = "id_T21") %>%
   left_join(part_T22, by = "id_T22") %>%
-  left_join(part_T23, by = "id_T23") 
+  left_join(part_T23, by = "id_T23")
+
+parts_in_component_K3SG1 <- parts_in_component_K3SG1 %>%
+  select(-(2:4)) %>%
+  mutate(part_in_K3SG1_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(part_T21_failure, part_T22_failure, part_T23_failure)) %>% 
+  mutate(earliest_part_in_K3SG1_failure_date = pmin(part_T21_failure_date, part_T22_failure_date, part_T23_failure_date, na.rm = TRUE)) %>%
+  select(-c(part_T21_failure_date, part_T22_failure_date, part_T23_failure_date)) 
 
 parts_in_component_K4 <- parts_in_component_K4 %>%
   left_join(part_T30, by = "id_T30") %>%
   left_join(part_T31, by = "id_T31") %>%
-  left_join(part_T32, by = "id_T32") 
+  left_join(part_T32, by = "id_T32")
+
+parts_in_component_K4 <- parts_in_component_K4 %>%
+  select(-(2:4)) %>%
+  mutate(part_in_K4_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(part_T30_failure, part_T31_failure, part_T32_failure)) %>% 
+  mutate(earliest_part_in_K4_failure_date = pmin(part_T30_failure_date, part_T31_failure_date, part_T32_failure_date, na.rm = TRUE)) %>%
+  select(-c(part_T30_failure_date, part_T31_failure_date, part_T32_failure_date)) 
 
 parts_in_component_K5 <- parts_in_component_K5 %>%
   left_join(part_T30, by = "id_T30") %>%
   left_join(part_T31, by = "id_T31") %>%
-  left_join(part_T33, by = "id_T33") 
+  left_join(part_T33, by = "id_T33")
 
-data2 <- data %>%
-  left_join(parts_in_component_K1BE1, by = c("id_body" = "id_K1BE1")) %>%
+parts_in_component_K5 <- parts_in_component_K5 %>%
+  select(-(2:4)) %>%
+  mutate(part_in_K5_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(part_T30_failure, part_T31_failure, part_T33_failure)) %>% 
+  mutate(earliest_part_in_K5_failure_date = pmin(part_T30_failure_date, part_T31_failure_date, part_T33_failure_date, na.rm = TRUE)) %>%
+  select(-c(part_T30_failure_date, part_T31_failure_date, part_T33_failure_date)) 
+
+# Joining all components with all parts contained 
+test_all_parts_in_components <- test_all_components_in_vehicles %>%
+  left_join(parts_in_component_K1BE1, by = c("id_engine" = "id_K1BE1")) %>%
   left_join(parts_in_component_K1DI1, by = c("id_engine" = "id_K1DI1")) %>%
   left_join(parts_in_component_K2LE1, by = c("id_seats" = "id_K2LE1")) %>%
   left_join(parts_in_component_K2ST1, by = c("id_seats" = "id_K2ST1")) %>%
   left_join(parts_in_component_K3AG1, by = c("id_gearshift" = "id_K3AG1")) %>%
   left_join(parts_in_component_K3SG1, by = c("id_gearshift" = "id_K3SG1")) %>%
   left_join(parts_in_component_K4, by = c("id_body" = "id_K4")) %>%
-  left_join(parts_in_component_K5, by = c("id_body" = "id_K5")) 
+  left_join(parts_in_component_K5, by = c("id_body" = "id_K5"))
+
+test2_all_parts_in_components <- test_all_parts_in_components %>% 
+  mutate(part_or_component_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)) %>%
+  select(-c(component_failure, id_body, id_gearshift, id_seats, id_engine, part_in_K1BE1_failure, part_in_K1DI1_failure, part_in_K2LE1_failure, part_in_K2ST1_failure, part_in_K3AG1_failure, part_in_K3SG1_failure, part_in_K4_failure, part_in_K5_failure)) %>%
+  mutate(earliest_part_or_component_failure_date = pmin(earliest_component_failure_date, earliest_part_in_K1BE1_failure_date, earliest_part_in_K1DI1_failure_date, earliest_part_in_K2LE1_failure_date, earliest_part_in_K2ST1_failure_date, earliest_part_in_K3AG1_failure_date, earliest_part_in_K3SG1_failure_date, earliest_part_in_K4_failure_date, earliest_part_in_K5_failure_date, na.rm = TRUE)) %>%
+  select(-c(earliest_component_failure_date, earliest_part_in_K1BE1_failure_date, earliest_part_in_K1DI1_failure_date, earliest_part_in_K2LE1_failure_date, earliest_part_in_K2ST1_failure_date, earliest_part_in_K3AG1_failure_date, earliest_part_in_K3SG1_failure_date, earliest_part_in_K4_failure_date, earliest_part_in_K5_failure_date))
+
+final_data <- all_vehicles %>%
+  left_join(test2_all_parts_in_components, by = "id_vehicle") %>%
+  mutate(is_failure = if_else(vehicle_failure > 0, 1, if_else(part_or_component_failure > 0, 1, 0))) %>% 
+  replace_na(list(is_failure = 0)) %>% 
+  mutate(earliest_failure_date = pmin(vehicle_failure_date, earliest_part_or_component_failure_date, na.rm = TRUE)) %>% 
+  select(-c(earliest_part_or_component_failure_date, part_or_component_failure)) %>% 
+  mutate(vehicle_lifespan = if_else(!is.na(vehicle_failure_date), as.numeric(difftime(vehicle_failure_date, vehicle_production_date)), NA)) %>% 
+  left_join(oem_locations, by = "plant") %>% 
+  relocate(id_vehicle, vehicle_type, plant, location, latitude, longitude, vehicle_production_date, vehicle_failure, vehicle_failure_date, vehicle_lifespan, is_failure, earliest_failure_date) 
+
+fwrite(final_data, file ="final_data.csv")
+
 ```
 
 ## 6 Evaluation
