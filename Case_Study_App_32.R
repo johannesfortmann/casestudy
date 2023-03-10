@@ -9,7 +9,7 @@ library(install.load)
 install_load("readr","shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets") 
 
 #load the data
-final_data <- read.csv("all_vehicles.csv")
+final_data <- read.csv("Final_dataset_group_32.csv")
 
 
 
