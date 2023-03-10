@@ -11,7 +11,7 @@ output:
 
 
 ## Library
-```{r }
+```{r, message=FALSE }
 if(!require("install.load")){
   install.packages("install.load")
 }
@@ -236,7 +236,7 @@ Die Variable "Herstellernummer" kann jedoch weggelassen werden, da sie keine Var
 
 ###
 ```{r}
-lm_fahrleistung2 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + days + ID + X1, data = fehleranalyse )
+lm_fahrleistung2 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + days + ID + X1, data = fehleranalyse)
 
 ```
 

@@ -269,9 +269,9 @@ part_T15 <- fread("Data/Einzelteil/Einzelteil_T15.csv", header = TRUE, data.tabl
 part_T21 <- fread("Data/Einzelteil/Einzelteil_T21.csv", header = TRUE, data.table = FALSE, nrows = 50)
 
 # T22
-#txt <- readLines("Data/Einzelteil/Einzelteil_T22.txt")
-#txt <- substr(txt, start = 0, stop = 10000)
-#txt <- gsub("\t\\",",",txt, fixed = FALSE)
+txt <- readLines("Data/Einzelteil/Einzelteil_T22.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub("\\t",",",txt, fixed = FALSE)
 #txt <- gsub("\f","\n",txt, fixed = TRUE)
 #part_T11 <- read.table(text = txt, sep = ",", header = TRUE, nrows = 50)
 #rm(txt)
@@ -313,6 +313,14 @@ part_T32 <- fread("Data/Einzelteil/Einzelteil_T32.csv", header = TRUE, data.tabl
 part_T33 <- fread("Data/Einzelteil/Einzelteil_T33.csv", header = TRUE, data.table = FALSE, nrows = 50)
 
 #part_T04 %>% filter(ID_T04 == "4-204-2043-125")
+```
+
+
+```{r}
+txt <- readLines("Data/Einzelteil/Einzelteil_T22.txt")
+txt <- substr(txt, start = 0, stop = 10000)
+txt <- gsub("\\t",",",txt, fixed = FALSE)
+head(txt)
 ```
 
 ## 4 Data Preparation
