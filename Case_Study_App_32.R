@@ -37,17 +37,16 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       
-      
+      #input for censoring date
       dateInput("censoring_date", "Censoring date of the analysis", value = max(final_data$earliest_failure_date )), 
       #input for production period
       dateRangeInput("production_period", "Production period of the vehicles", start = min(final_data$vehicle_production_date), max(final_data$vehicle_production_date)),
       
       
       
-      ## hierfür fehlen noch die zugrundeliegenden Daten
+      
       # create the checkbox group for the car selection
       checkboxGroupButtons(
-        
         
         inputId = "selected_vehicle_type",
         label = "Choose the vehicle type",
@@ -102,7 +101,7 @@ server <- function(input, output) {
   
   
   
-  ## hier Plot einfügen (nur Platzhalter)
+  #create the box plot from the selected data
   output$plot <- renderPlot({
     ggplot(selected_data(), aes(as.factor(vehicle_type), vehicle_lifespan))+
     geom_boxplot()+
@@ -114,7 +113,7 @@ server <- function(input, output) {
   })
   
   
-  ## hier Tabelle einfügen (nur Platzhalter)
+  #create the table to show the underlying data
   output$table <- DT::renderDT ({
     #DT::datatable(final_data) ##should be this table
     DT::datatable(selected_data()) ##this table only for test reasons
