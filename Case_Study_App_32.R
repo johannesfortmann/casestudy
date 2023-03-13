@@ -15,21 +15,31 @@ final_data <- read.csv("Final_dataset_group_32.csv")
 
 
 # Define UI for application
-ui <- fluidPage(style = "background-color: Lightsteelblue",
-   
+ui <- fluidPage(
+  
   # load the font awesome library (necessary for the checkbox group)
   tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")),             
   
   # Application title
-  titlePanel("Production volumes and field failures"),
+  titlePanel("Produktionsvolumina und Feldausfälle"),
   
+  tags$head(
+    tags$style(
+      HTML("
+        body {
+          height: 100%;
+          background-color: Lightsteelblue;
+        }
+      ")
+    )
+  ),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
       
       
-      dateInput("censoring_date", "Censoring date of the analysis", value = max(final_data$earliest_failure_date )), 
+      dateInput("censoring date", "Censoring date of the analysis", value = max(final_data$vehicle_failure_date )), ##hier earliest_failure_date 
       #input for production period
       dateRangeInput("production_period", "Production period of the vehicles", start = min(final_data$vehicle_production_date), max(final_data$vehicle_production_date)),
       
@@ -42,8 +52,7 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
         
         inputId = "selected_vehicle_type",
         label = "Choose the vehicle type",
-        choices = c("Type 11" = "11","Type 12" = "12"), 
-        selected = c("11", "12"),
+        choices = c("Type 11", "Type 12"),
         individual = TRUE,
         checkIcon = list(
           yes = tags$i(class = "fa fa-circle", style = "color: Lightsteelblue"),
@@ -62,13 +71,14 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
                  leafletOutput("map")),
         tabPanel("Plot",   
                  plotOutput("plot")),
-        tabPanel("Underlying dataset",
-                 DT::DTOutput("table"))
+        tabPanel("Table",
+                 tableOutput("table"))
       )
     )
   )
   
 )
+
 
 # Define server logic
 server <- function(input, output) {
