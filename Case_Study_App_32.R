@@ -21,7 +21,7 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
   tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")),             
   
   # Application title
-  titlePanel("Produktionsvolumina und Feldausfälle"),
+  titlePanel("Production volumes and field failures"),
   
   
   # Sidebar with a slider input for number of bins 
@@ -29,7 +29,7 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
     sidebarPanel(
       
       
-      dateInput("censoring date", "Censoring date of the analysis", value = max(final_data$vehicle_failure_date )), ##hier earliest_failure_date 
+      dateInput("censoring_date", "Censoring date of the analysis", value = max(final_data$earliest_failure_date )), 
       #input for production period
       dateRangeInput("production_period", "Production period of the vehicles", start = min(final_data$vehicle_production_date), max(final_data$vehicle_production_date)),
       
@@ -42,7 +42,8 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
         
         inputId = "selected_vehicle_type",
         label = "Choose the vehicle type",
-        choices = c("Type 11", "Type 12"),
+        choices = c("Type 11" = "11","Type 12" = "12"), 
+        selected = c("11", "12"),
         individual = TRUE,
         checkIcon = list(
           yes = tags$i(class = "fa fa-circle", style = "color: Lightsteelblue"),
@@ -61,8 +62,8 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
                  leafletOutput("map")),
         tabPanel("Plot",   
                  plotOutput("plot")),
-        tabPanel("Table",
-                 tableOutput("table"))
+        tabPanel("Underlying dataset",
+                 DT::DTOutput("table"))
       )
     )
   )
@@ -73,8 +74,14 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
 server <- function(input, output) {
     
   #adjust the data to the selected values
-  selected_data <- final_data# %>%
-  #  filter(vehicle_production_date>production_period[1]) 
+  selected_data <- reactive({
+    final_data %>%
+    filter(vehicle_production_date >= input$production_period[1], 
+           vehicle_production_date <= input$production_period[2],
+           earliest_failure_date <= input$censoring_date,
+           vehicle_type %in% input$selected_vehicle_type)
+           
+  })
   
   
   
@@ -92,8 +99,9 @@ server <- function(input, output) {
   
   
   ## hier Tabelle einfügen (nur Platzhalter)
-  output$table <- renderTable({
-    
+  output$table <- DT::renderDT ({
+    #DT::datatable(final_data) ##should be this table
+    DT::datatable(selected_data()) ##this table only for test reasons
   })
   
   
