@@ -6,7 +6,7 @@ if(!require("install.load")){
 library(install.load)
 
 ## noch durch die benötigten Pakete zu ersetzen
-install_load("readr","shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets") 
+install_load("readr","shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes") 
 
 #load the data
 final_data <- read.csv("Final_dataset_group_32.csv")
@@ -104,7 +104,13 @@ server <- function(input, output) {
   
   ## hier Plot einfügen (nur Platzhalter)
   output$plot <- renderPlot({
-    ggplot()
+    ggplot(selected_data(), aes(as.factor(vehicle_type), vehicle_lifespan))+
+    geom_boxplot()+
+    scale_x_discrete(labels = c("Type 11", "Type 12")) +
+    scale_y_continuous(limits = c(0,600)) +
+    labs(x = "Vehicle Type", y = "Lifetime") +
+    ggtitle("Lifetime by Vehicle Type")+
+    theme_clean()
   })
   
   
