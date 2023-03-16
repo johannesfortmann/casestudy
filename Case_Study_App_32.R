@@ -98,14 +98,22 @@ server <- function(input, output) {
   })
   
   
-  ## hier Karte einfügen (nur Platzhalter) 
+  
+  ## map-function
   output$map <- renderLeaflet({
-    final_data %>% na.omit() 
-    data %>% group_by(selected_data, location) %>% summarise(total = sum(vehicle_failure)) %>% left_join(selected_data, by = c("location" = "location")) %>% na.omit() %>%
-    leaflet()%>%
-    addProviderTiles(providers$OpenStreetMap.DE) %>%
-    addCircleMarkers(lat = ~latitude, lng = ~longitude, popup = ~location, radius = ~total/10000)
+    #selected_data %>% na.omit() 
+    data <- group_by(selected_data(), location) %>% summarise(total = sum(is_failure), count = n(), latitude, longitude) %>% distinct() %>% na.omit() %>%
+      leaflet()%>%
+      #map theme
+      addProviderTiles(providers$OpenStreetMap.DE) %>%
+      #adds circle markers that have a size relative to the total number of cars...?
+      addCircleMarkers(lat = ~latitude, lng = ~longitude, popup = ~count, radius = ~count/30000)
   })
+  observeEvent(input$map_marker_click, { 
+    p <- input$map_marker_click  
+    print(p)
+  })
+  
   
   
   
