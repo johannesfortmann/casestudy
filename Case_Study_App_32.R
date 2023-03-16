@@ -98,24 +98,28 @@ server <- function(input, output) {
   })
   
   
-  
   ## hier Karte einfügen (nur Platzhalter) 
   output$map <- renderLeaflet({
-    leaflet()
+    final_data %>% na.omit() 
+    data %>% group_by(selected_data, location) %>% summarise(total = sum(vehicle_failure)) %>% left_join(selected_data, by = c("location" = "location")) %>% na.omit() %>%
+    leaflet()%>%
+    addProviderTiles(providers$OpenStreetMap.DE) %>%
+    addCircleMarkers(lat = ~latitude, lng = ~longitude, popup = ~location, radius = ~total/10000)
   })
   
   
   
   #create the box plot from the selected data
+  #create the box plot from the selected data
   output$plot <- renderPlot({
     ggplot(selected_data(), aes(as.factor(vehicle_type), time_till_first_failure, fill = as.factor(vehicle_type)))+
-    geom_boxplot(na.rm = TRUE)+
-    scale_x_discrete(labels = c("Type 11", "Type 12")) +
-    scale_y_continuous(limits = c(0,800)) +
-    labs(x = "Vehicle Type", y = "Lifetime in days") +
-    ggtitle("Lifetime by Vehicle Type")+
-    theme_clean()+
-    theme(
+      geom_boxplot(na.rm = TRUE)+
+      scale_x_discrete(labels = c("Type 11", "Type 12")) +
+      scale_y_continuous(limits = c(0,800)) +
+      labs(x = "Vehicle Type", y = "Lifetime in days") +
+      ggtitle("Lifetime by Vehicle Type")+
+      theme_clean()+
+      theme(
         legend.position="none") 
   })
   
