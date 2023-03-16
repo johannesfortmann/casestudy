@@ -6,7 +6,7 @@ if(!require("install.load")){
 library(install.load)
 
 
-install_load("readr", "shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes", "tidyverse") 
+install_load("readr", "shiny", "leaflet", "htmltools", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes", "tidyverse") 
 #install_load("readr", "shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes" )
 
 #load the data
@@ -114,7 +114,6 @@ server <- function(input, output) {
     scale_y_continuous(limits = c(0,800)) +
     labs(x = "Vehicle Type", y = "Lifetime in days") +
     ggtitle("Lifetime by Vehicle Type")+
-    geom_jitter(size=0.1, alpha=0.003, width = 0.05, height = 0.02) +
     theme_clean()+
     theme(
         legend.position="none") 
