@@ -101,7 +101,7 @@ server <- function(input, output) {
   ## hier Karte einfügen (nur Platzhalter) 
   output$map <- renderLeaflet({
     final_data %>% na.omit() 
-    data %>% group_by(selected_data(), location) %>% summarise(total = sum(vehicle_failure)) %>% left_join(selected_data(), by = c("location" = "location")) %>% na.omit() %>%
+    data %>% group_by(selected_data, location) %>% summarise(total = sum(vehicle_failure)) %>% left_join(selected_data, by = c("location" = "location")) %>% na.omit() %>%
     leaflet()%>%
     addProviderTiles(providers$OpenStreetMap.DE) %>%
     addCircleMarkers(lat = ~latitude, lng = ~longitude, popup = ~location, radius = ~total/10000)
