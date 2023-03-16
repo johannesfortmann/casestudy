@@ -61,14 +61,31 @@ ui <- fluidPage(
     
     # Show a plot of the generated distribution
     mainPanel(
-
+      
       
       ##OUTPUT HERE
       tabsetPanel(
         
         #Display the map
         tabPanel("Map",
-                 leafletOutput("map")),
+                 absolutePanel(
+                   top = 180, left = 10,
+                   dropdownButton(
+                     selectInput(inputId = 'map_selection',
+                                 label = 'select which data to show',
+                                 choices = c("Production quantities"="a", "Relative number of field failures in relation to production volume"="b")
+                     ),
+                     circle = TRUE, 
+                     status = "danger",
+                     icon = icon("cog"), 
+                     width = "300px",
+                     tooltip = tooltipOptions(title = "Click to change the display!")
+                   )
+                 ),
+                 leafletOutput("map")
+        )
+        
+        ,
         
         #Display the plot
         tabPanel("Plot",   
@@ -86,7 +103,7 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
-    
+  
   #adjust the data to the selected values
   selected_data <- reactive({
     final_data %>%
@@ -117,7 +134,7 @@ server <- function(input, output) {
   
   
   
-  #create the box plot from the selected data
+  
   #create the box plot from the selected data
   output$plot <- renderPlot({
     ggplot(selected_data(), aes(as.factor(vehicle_type), time_till_first_failure, fill = as.factor(vehicle_type)))+
