@@ -177,8 +177,8 @@ server <- function(input, output) {
   
   #create the table to show the underlying data
   output$table <- DT::renderDT ({
-    #DT::datatable(final_data) 
-    DT::datatable(selected_data()) ##this table only for test reasons
+    DT::datatable(final_data) 
+    #DT::datatable(selected_data()) ##this table only for test reasons
   })
   
   
