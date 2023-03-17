@@ -68,12 +68,14 @@ ui <- fluidPage(
         
         #Display the map
         tabPanel("Map",
+                 leafletOutput("map"),
                  absolutePanel(
-                   top = 180, left = 10,
+                   top = 180, left = 15,
                    dropdownButton(
                      selectInput(inputId = 'map_selection',
                                  label = 'select which data to show',
-                                 choices = c("Production quantities"="a", "Relative number of field failures in relation to production volume"="b")
+                                 choices = c("Production quantities"="a", "Relative number of field failures in relation to production volume"="b"),
+                                 selected = "a"
                      ),
                      circle = TRUE, 
                      status = "danger",
@@ -81,8 +83,8 @@ ui <- fluidPage(
                      width = "300px",
                      tooltip = tooltipOptions(title = "Click to change the display!")
                    )
-                 ),
-                 leafletOutput("map")
+                 )
+                 
         )
         
         ,
@@ -114,22 +116,30 @@ server <- function(input, output) {
     
   })
   
+  data_map <- reactive({
+    if (input$map_selection == "b")
+    {
+      group_by(selected_data(), location) %>% summarise(total = sum(is_failure)/nrow(selected_data()), latitude, longitude) %>% distinct() 
+    }else if (input$map_selection == "a")
+    {
+      group_by(selected_data(), location) %>% summarise(total = nrow(selected_data()), latitude, longitude) %>% distinct() 
+    }else
+    {
+    }
+  })
   
   
   ## map-function
   output$map <- renderLeaflet({
     #selected_data %>% na.omit() 
-    data <- group_by(selected_data(), location) %>% summarise(total = sum(is_failure), count = n(), latitude, longitude) %>% distinct() %>% na.omit() %>%
+    data_map() %>%
       leaflet()%>%
       #map theme
       addProviderTiles(providers$OpenStreetMap.DE) %>%
       #adds circle markers that have a size relative to the total number of cars...?
-      addCircleMarkers(lat = ~latitude, lng = ~longitude, popup = ~count, radius = ~count/30000)
+      addCircleMarkers(lat = ~latitude, lng = ~longitude, label = ~total, radius = ~total/30000)
   })
-  observeEvent(input$map_marker_click, { 
-    p <- input$map_marker_click  
-    print(p)
-  })
+  
   
   
   
