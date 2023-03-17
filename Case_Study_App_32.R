@@ -6,38 +6,52 @@ if(!require("install.load")){
 library(install.load)
 
 ## noch durch die benötigten Pakete zu ersetzen
-install_load("shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets") 
+install_load("readr","shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes") 
+
+#load the data
+final_data <- read.csv("Final_dataset_group_32.csv")
 
 
 
 # Define UI for application
-ui <- fluidPage(style = "background-color: Lightsteelblue",
-   
+ui <- fluidPage(
+  
   # load the font awesome library (necessary for the checkbox group)
   tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")),             
   
   # Application title
-  titlePanel("Produktionsvolumina und Feldausfälle"),
+  titlePanel("Production volumes and field failures"),
   
+  tags$head(
+    tags$style(
+      HTML("
+        body {
+          height: 100%;
+          background-color: Lightsteelblue;
+        }
+      ")
+    )
+  ),
   
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     sidebarPanel(
       
-      ##INPUT HERE
-      dateInput("zensierungsdatum", "Zensierungsdatum der Analyse" ),
-      dateRangeInput("produktionszeitraum", "Produktionszeitraum der Fahrzeuge"),
+      #input for censoring date
+      dateInput("censoring_date", "Censoring date of the analysis", value = max(final_data$earliest_failure_date )), 
+      #input for production period
+      dateRangeInput("production_period", "Production period of the vehicles", start = min(final_data$vehicle_production_date), max(final_data$vehicle_production_date)),
       
       
       
-      ## hierfür fehlen noch die zugrundeliegenden Daten
+      
       # create the checkbox group for the car selection
       checkboxGroupButtons(
         
-        
-        inputId = "fahrzeugtyp_auswahl",
-        label = "Auswahl an betrachteten Fahrzeugtypen",
-        choices = c("Option 1", "Option 2", "Option 3", "Option 4"),
+        inputId = "selected_vehicle_type",
+        label = "Choose the vehicle type",
+        choices = c("Type 11" = "11","Type 12" = "12"), 
+        selected = c("11", "12"),
         individual = TRUE,
         checkIcon = list(
           yes = tags$i(class = "fa fa-circle", style = "color: Lightsteelblue"),
@@ -52,20 +66,31 @@ ui <- fluidPage(style = "background-color: Lightsteelblue",
       
       ##OUTPUT HERE
       tabsetPanel(
-        tabPanel("Karte",
+        tabPanel("Map",
                  leafletOutput("map")),
         tabPanel("Plot",   
                  plotOutput("plot")),
-        tabPanel("Tabelle",
-                 tableOutput("table"))
+        tabPanel("Underlying dataset",
+                 DT::DTOutput("table"))
       )
     )
   )
   
 )
 
+
 # Define server logic
 server <- function(input, output) {
+    
+  #adjust the data to the selected values
+  selected_data <- reactive({
+    final_data %>%
+      filter(vehicle_production_date >= input$production_period[1], 
+             vehicle_production_date <= input$production_period[2],
+             earliest_failure_date <= input$censoring_date,
+             vehicle_type %in% input$selected_vehicle_type)
+    
+  })
   
   
   
@@ -76,15 +101,22 @@ server <- function(input, output) {
   
   
   
-  ## hier Plot einfügen (nur Platzhalter)
+  #create the box plot from the selected data
   output$plot <- renderPlot({
-    ggplot()
+    ggplot(selected_data(), aes(as.factor(vehicle_type), vehicle_lifespan))+
+    geom_boxplot()+
+    scale_x_discrete(labels = c("Type 11", "Type 12")) +
+    scale_y_continuous(limits = c(0,600)) +
+    labs(x = "Vehicle Type", y = "Lifetime") +
+    ggtitle("Lifetime by Vehicle Type")+
+    theme_clean()
   })
   
   
-  ## hier Tabelle einfügen (nur Platzhalter)
-  output$table <- renderTable({
-    
+  #create the table to show the underlying data
+  output$table <- DT::renderDT ({
+    #DT::datatable(final_data) ##should be this table
+    DT::datatable(selected_data()) ##this table only for test reasons
   })
   
   
