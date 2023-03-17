@@ -1,0 +1,10 @@
+diff a/Case_Study_App_32.R b/Case_Study_App_32.R	(rejected hunks)
+@@ -107,7 +107,7 @@
+   #create the box plot from the selected data
+   output$plot <- renderPlot({
+     ggplot(selected_data(), aes(as.factor(vehicle_type), vehicle_lifespan))+
+-    geom_boxplot()+
++    geom_boxplot(na.rm = FALSE)+
+     scale_x_discrete(labels = c("Type 11", "Type 12")) +
+     scale_y_continuous(limits = c(0,600)) +
+     labs(x = "Vehicle Type", y = "Lifetime") +

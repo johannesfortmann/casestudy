@@ -5,8 +5,9 @@ if(!require("install.load")){
 }
 library(install.load)
 
-## noch durch die benötigten Pakete zu ersetzen
-install_load("readr","shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes") 
+
+install_load("readr", "shiny", "leaflet", "htmltools", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes", "tidyverse") 
+#install_load("readr", "shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes" )
 
 #load the data
 final_data <- read.csv("Final_dataset_group_32.csv")
@@ -33,17 +34,15 @@ ui <- fluidPage(
     )
   ),
   
-  # Sidebar with a slider input for number of bins 
+  # create the sidebar layout
   sidebarLayout(
     sidebarPanel(
       
       #input for censoring date
       dateInput("censoring_date", "Censoring date of the analysis", value = max(final_data$earliest_failure_date )), 
+      
       #input for production period
       dateRangeInput("production_period", "Production period of the vehicles", start = min(final_data$vehicle_production_date), max(final_data$vehicle_production_date)),
-      
-      
-      
       
       # create the checkbox group for the car selection
       checkboxGroupButtons(
@@ -66,10 +65,33 @@ ui <- fluidPage(
       
       ##OUTPUT HERE
       tabsetPanel(
+        
+        #Display the map
         tabPanel("Map",
-                 leafletOutput("map")),
+                 absolutePanel(
+                   top = 180, left = 10,
+                   dropdownButton(
+                     selectInput(inputId = 'map_selection',
+                                 label = 'select which data to show',
+                                 choices = c("Production quantities"="a", "Relative number of field failures in relation to production volume"="b")
+                     ),
+                     circle = TRUE, 
+                     status = "danger",
+                     icon = icon("cog"), 
+                     width = "300px",
+                     tooltip = tooltipOptions(title = "Click to change the display!")
+                   )
+                 ),
+                 leafletOutput("map")
+        )
+        
+        ,
+        
+        #Display the plot
         tabPanel("Plot",   
                  plotOutput("plot")),
+        
+        #Display the underlying dataset
         tabPanel("Underlying dataset",
                  DT::DTOutput("table"))
       )
@@ -81,7 +103,7 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
-    
+  
   #adjust the data to the selected values
   selected_data <- reactive({
     final_data %>%
@@ -94,29 +116,43 @@ server <- function(input, output) {
   
   
   
-  ## hier Karte einfügen (nur Platzhalter) 
+  ## map-function
   output$map <- renderLeaflet({
-    leaflet()
+    #selected_data %>% na.omit() 
+    data <- group_by(selected_data(), location) %>% summarise(total = sum(is_failure), count = n(), latitude, longitude) %>% distinct() %>% na.omit() %>%
+      leaflet()%>%
+      #map theme
+      addProviderTiles(providers$OpenStreetMap.DE) %>%
+      #adds circle markers that have a size relative to the total number of cars...?
+      addCircleMarkers(lat = ~latitude, lng = ~longitude, popup = ~count, radius = ~count/30000)
   })
+  observeEvent(input$map_marker_click, { 
+    p <- input$map_marker_click  
+    print(p)
+  })
+  
+  
   
   
   
   #create the box plot from the selected data
   output$plot <- renderPlot({
-    ggplot(selected_data(), aes(as.factor(vehicle_type), vehicle_lifespan))+
-    geom_boxplot()+
-    scale_x_discrete(labels = c("Type 11", "Type 12")) +
-    scale_y_continuous(limits = c(0,600)) +
-    labs(x = "Vehicle Type", y = "Lifetime") +
-    ggtitle("Lifetime by Vehicle Type")+
-    theme_clean()
+    ggplot(selected_data(), aes(as.factor(vehicle_type), time_till_first_failure, fill = as.factor(vehicle_type)))+
+      geom_boxplot(na.rm = TRUE)+
+      scale_x_discrete(labels = c("Type 11", "Type 12")) +
+      scale_y_continuous(limits = c(0,800)) +
+      labs(x = "Vehicle Type", y = "Lifetime in days") +
+      ggtitle("Lifetime by Vehicle Type")+
+      theme_clean()+
+      theme(
+        legend.position="none") 
   })
   
   
   #create the table to show the underlying data
   output$table <- DT::renderDT ({
-    #DT::datatable(final_data) ##should be this table
-    DT::datatable(selected_data()) ##this table only for test reasons
+    DT::datatable(final_data) 
+    #DT::datatable(selected_data()) ##this table only for test reasons
   })
   
   
