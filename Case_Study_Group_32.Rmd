@@ -1144,7 +1144,7 @@ fwrite(final_data, file ="Final_dataset_group_32.csv")
 
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
 # Overview over the final dataframe
-datatable(final_data[1:200,], caption = "Final Dataset")
+datatable(final_data %>% sample_n(200) , caption = "Final Dataset", colnames = c("Vehicle ID" = "id_vehicle", "Vehicle Type" = "vehicle_type", "Manufacturing Plant" = "plant", "Location" = "location", "Latitude" = "latitude", "Longitude" = "longitude", "Production date" = "vehicle_production_date", "Vehicle Failure" = "vehicle_failure", "Vehicle Failure Date" = "vehicle_failure_date", "Vehicle Lifespan" = "vehicle_lifespan", "Field-Failure" = "is_failure", "Earliest Failure Date" = "earliest_failure_date", "Time till first Failure" = "time_till_first_failure"))
 ```
 
 
