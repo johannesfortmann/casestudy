@@ -9,7 +9,7 @@ output:
     code_folding: hide
 ---
 
-
+Als erstes werden die benötigten Pakete installiert bzw. geladen.
 ## Library
 ```{r, message=FALSE }
 if(!require("install.load")){
@@ -20,7 +20,7 @@ library(install.load)
 install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "purrr", "moments","tidyverse", "scales","nortest")
 ```
 
-
+Danach werden die beiden Datensätze eingelesen.
 ```{r }
 Komponente_K7 <- read.csv2("Data/Logistikverzug/Komponente_K7.csv")
 Logistikverzug_K7 <- read.csv("Data/Logistikverzug/Logistikverzug_K7.csv",sep=";")
@@ -35,7 +35,7 @@ Logistikverzug <- merge(x = Komponente_K7[,c("IDNummer", "Produktionsdatum")], y
 
 ```
 
-Das Datumsformat aus Logistikverzug_K7 wird ins gleiche Format umgewandelt wie jenes aus Komponente_K7.
+Das Datumsformat aus Logistikverzug_K7 wird ins gleiche Format umgewandelt wie jenes aus Komponente_K7, damit sie subtrahieren kann.
 
 ```{r}
 Logistikverzug$Wareneingang <- as.Date(strptime(Logistikverzug$Wareneingang, format = "%d.%m.%Y"), format = "%Y-%m-%a")
@@ -67,19 +67,25 @@ Logistikverzug$AdjustierterVerzug<-as.integer( as.Date(Logistikverzug$Wareneinga
 #hier werden noch Sachen removed
 #rm(IDNummer)
 ```
-
-Um den Logistikverzug darstellen zu können, wird zunächst ein statistischer Test durchgeführt, hier: Anderson-Darling-Test, der auch große Stichprobengrößen auf Normalverteilung prüfen kann.
+Um sich einen Überblick über die Verteilung zu verschaffen, wird zunächst der Logistikverzug geplotet.
 
 ```{r}
+hist(Logistikverzug$AdjustierterVerzug, breaks=12, main="Histogram of Logistikverzug", xlab="Logistikverzug (days)")
+```
+
+
+Der Plot weist nicht auf eine Normalverteilung hin, dies wird nun noch mit einem statistischen Test überprüft.
+Es muss einer gewählt werden, der auch für große Stichprobenmengen geeignet ist, hier: Anderson-Darling-Test.
+```{r}
 # Variable auswählen
-var <- Logistikverzug$AdjustierterVerzug
-n <- length(var)
-n
+#var <- Logistikverzug$AdjustierterVerzug
+#n <- length(var)
+#n
 # Shapiro-Wilk-Test durchführen
 #shapiro.test( Logistikverzug$AdjustierterVerzug)
 
 
-ad.test(var)
+ad.test(Logistikverzug$AdjustierterVerzug)
 ```
 
 Die Ausgabe des Anderson-Darling-Tests für die Variable "AdjustierterVerzug" gibt an, dass die Variable nicht normalverteilt ist. Das bedeutet, dass die Verteilung der Variable nicht der Normalverteilung entspricht. Der Test hat einen sehr kleinen p-Wert von weniger als 2,2e-16, was darauf hindeutet, dass die Nullhypothese der Normalverteilung abgelehnt werden sollte.
@@ -89,13 +95,15 @@ Durch die Verteilung der Daten ergibt sich, dass ein Boxplot ist eine nützliche
 ```{r}
 boxplot(var, col = "blue", main = "Verteilung der Variable")
 ```
-Da keine Normalverteilung vorliegt, wird nun auf Schiefe geprüft.
+Da keine Normalverteilung vorliegt und der Plot den Verdacht der Schiefe erregt, wird nun auf diese geprüft.
 ```{r}
 skewness(var)
 ```
-Eine Schiefe von 0,55 weist darauf hin, dass die Verteilung leicht rechtsschief (rechtssteil) ist, da die Schiefe positiv ist.
+Die Schiefe (Skewness) ist eine statistische Maßzahl, die die Asymmetrie einer Verteilung beschreibt. Ein Wert von 0 bedeutet, dass die Verteilung symmetrisch ist. Wenn der Wert größer als 0 ist, dann deutet dies auf eine rechtsschiefe Verteilung hin, d.h. die Verteilung hat einen längeren rechten Schwanz im Vergleich zum linken Schwanz. Wenn der Wert kleiner als 0 ist, dann deutet dies auf eine linksschiefe Verteilung hin, d.h. die Verteilung hat einen längeren linken Schwanz im Vergleich zum rechten Schwanz.
 
-So eine Verteilung lässt sich sehr gut mit einem Densityplot darstellen, da man die Schiefe dort gut erkennen kann.
+In diesem Fall ergab die Skewness den Wert von 0.55, was darauf hindeutet, dass die Verteilung wahrscheinlich rechtsschief ist. Dies bedeutet, dass die meisten Datenwerte näher am linken Ende der Verteilung liegen und es einige wenige Ausreißer auf der rechten Seite gibt, die zu einem längeren rechten Schwanz führen.
+
+So eine Verteilung lässt sich sehr gut mit einem Densityplot darstellen, da man die Schiefe dort gut erkennen kann. Die Ausreißer ganz rechts werden damit nicht dargestellt, die Häufigkeit ist allerdings auch so gering, dass sie vernachlässigbar sind.
 ```{r}
 # Dichteplot erstellen
 densityplot <- density(var)
@@ -117,7 +125,7 @@ Der Minimalwert beträgt damit 1.
 ```{r}
 max(Logistikverzug$AdjustierterVerzug)
 ```
-Der Minimalwert beträgt damit 12.
+Der Maximalwert beträgt damit 12.
 
 
 ### Subtask c
@@ -126,6 +134,8 @@ Der Mittelwert ist zu bestimmten und Alternativen dazu zu benennen.
 mean(Logistikverzug$AdjustierterVerzug)
 ```
 Der Mittelwert beträgt damit 4.223554 Tage.
+
+Neben dem ausreißeranfälligen arithmetischen Mittel gibt es noch den Median, dieser könnte ein geeigneteres Maß für die Zentralität der Verteilung sein, wenn die Verteilung rechtsschief ist. Je nach Schlussfolgerung, die aus den Daten gezogen werden soll, kann auch der Modus, also der am häufigsten vorkommende Wert in einer Datenmenge, sinnvoll sein. Ginge es darum, die Anzahl der Tage möglichst oft genau zu treffen, dann ist dieser Wert am relevantesten, geht es darum, möglichst oft in der Nähe des Wertes zu sein, dann ist es der Median und um sich ein Überblick zu verschaffen, reicht das arithmetische Mittel, ist allerdings aufgrund der Schiefe kritisch zu betrachten. 
 
 
 ```{r}
@@ -136,13 +146,13 @@ Der Mittelwert beträgt damit 4.223554 Tage.
 
 ```
 ### Subtask d
-Für die schiefe Verteilung eignet sich ebenfalls ein Histogramm sehr gut, hier mit Plotly realisiert.
+Für die schiefe Verteilung eignet sich ein Histogramm sehr gut, hier mit Plotly realisiert.
 ```{r}
 # Histogramm erstellen
 p <- plot_ly(Logistikverzug, x = ~AdjustierterVerzug, type = "histogram", nbinsx = 10)
 
 # Layout anpassen
-p <- p %>% layout(title = "Logistikverzug Histogramm", xaxis = list(title = "Logistikverzug (Tage)"), yaxis = list(title = "Häufigkeit"))
+p <- p %>% layout(title = "Logistikverzug Histogram", xaxis = list(title = "Logistikverzug (days)"), yaxis = list(title = "Häufigkeit"))
 
 # Histogramm anzeigen
 p
@@ -156,6 +166,10 @@ Skalierbarkeit: Eine relationale Datenbank kann einfach erweitert werden, indem 
 Datenabfragen: Eine relationale Datenbank ermöglicht komplexe Datenabfragen, um spezifische Daten zu finden und zu analysieren. Durch die Verwendung von SQL-Abfragen können Daten leicht gefiltert, sortiert und gruppiert werden, um schnell Informationen zu finden und Trends zu identifizieren.
 
 Datensicherheit: Eine relationale Datenbank bietet mehrere Funktionen, um Daten zu schützen, z.B. die Möglichkeit, Zugriffsrechte auf Tabellen und Spalten zu beschränken. Dies kann sicherstellen, dass sensible Daten nur von autorisierten Personen eingesehen und bearbeitet werden können, um Datenschutz und Compliance-Anforderungen zu erfüllen.
+
+
+ENTITY-DIAGRAM
+
 ## Task 3
 ```{r}
 Zulassungen_aller_Fahrzeuge <- read_csv2("./Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
@@ -169,15 +183,7 @@ kable(datatypes, row.names = FALSE, caption="Attribute der Datentypen", format="
 
 
 
-```{r}
-analyse <- read_csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv") 
 
-
-```
-```{r}
-häufigkeit <- table(analyse$Fehlerhaft_Fahrleistung)
-häufigkeit
-```
 ## Task 4
 
 
