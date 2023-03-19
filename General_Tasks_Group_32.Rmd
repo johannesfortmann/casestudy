@@ -11,21 +11,38 @@ output:
 
 Als erstes werden die benötigten Pakete installiert bzw. geladen.
 ## Library
+
 ```{r, message=FALSE }
 if(!require("install.load")){
   install.packages("install.load")
 }
 library(install.load)
 
-install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "purrr", "moments","tidyverse", "scales","nortest")
+install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "modeest","diptest", "moments","tidyverse", "scales","nortest")
 ```
 
-Danach werden die beiden Datensätze eingelesen.
+
+## Task 1
+
+### Subtask a
+Arbeits-Datensatz erstellen:
+Zunächst muss ein arbeitsfähiger Datensatz erstellt werden, dafür werden zuerst alle nötigen Pakete installiert und geladen werden.
+
+```{r, message=FALSE }
+if(!require("install.load")){
+  install.packages("install.load")
+}
+library(install.load)
+
+install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "modeest","diptest", "moments","tidyverse", "scales","nortest")
+```
+
+Dann werden die beiden benötigten Dateien geladen. 
+
 ```{r }
 Komponente_K7 <- read.csv2("Data/Logistikverzug/Komponente_K7.csv")
 Logistikverzug_K7 <- read.csv("Data/Logistikverzug/Logistikverzug_K7.csv",sep=";")
 ```
-
 Es fällt auf, dass sechs Komponenten fehlerhaft sind, dies spielt für den Arbeits-Datensatz jedoch keine Rolle, da diese trotzdem verschickt wurden und nur das für die zu bearbeitenden Aufgaben vorausgesetzt wird. Als Logistikverzug wird die Differenz zwischen Wareneingangsdatum und Versanddatum angenommen.Die Versanddaten sind nicht gegeben, allerdings geht  aus der Aufgabenstellung geht hervor, dass die Arbeiter einen Tag von Warenproduktion zu Warenversand an einem Werktag brauchen, bei Samstag brauchen sie zwei, da der Sonntag nur zur Produktion, aber nicht zum Versand genutzt wird. Um den echten Logistikverzug zu ermitteln, werden also zwei Tage bei einem Samstag und ein Tag bei allen anderen Tagen auf die Produktionsdaten addiert.
 
 Die nötigen Daten aus den Tabellen werden unter Angabe ihrer IDNummer zusammengefügt.
@@ -34,85 +51,67 @@ Die nötigen Daten aus den Tabellen werden unter Angabe ihrer IDNummer zusammeng
 Logistikverzug <- merge(x = Komponente_K7[,c("IDNummer", "Produktionsdatum")], y = Logistikverzug_K7[ , c("IDNummer","Wareneingang")], by = "IDNummer")
 
 ```
-
-Das Datumsformat aus Logistikverzug_K7 wird ins gleiche Format umgewandelt wie jenes aus Komponente_K7, damit sie subtrahieren kann.
-
+Das Datumsformat aus Logistikverzug_K7 wird ins gleiche Format umgewandelt wie jenes aus Komponente_K7.
 ```{r}
 Logistikverzug$Wareneingang <- as.Date(strptime(Logistikverzug$Wareneingang, format = "%d.%m.%Y"), format = "%Y-%m-%a")
 
 ```
-
 Es wird eine zusätzliche Spalte erzeugt mit den Wochentagen.
-
 ```{r}
 Logistikverzug$Wochentag = weekdays(as.Date(Logistikverzug$Produktionsdatum))
 ```
-
 Es wird ein Tag extra auf den Wareneingang für alle Samstage addiert.
-
 ```{r}
 samstagZeilen <- which(Logistikverzug$Wochentag == "Samstag")
 Logistikverzug$Wareneingang[samstagZeilen] <- Logistikverzug$Wareneingang[samstagZeilen] +1
 
 ```
-
-
 Nun wird für alle Differenzen zwischen Wareneingang und Produktionsdatum die Differenz um 1 vermindert. Somit werden für die Samstage nun zwei Tage berücksichtigt und für alle anderen Tage einer. 
-
 ```{r}
 Logistikverzug$AdjustierterVerzug<-as.integer( as.Date(Logistikverzug$Wareneingang) - as.Date(Logistikverzug$Produktionsdatum)-1) 
 ```
-
 ```{r}
 #hier werden noch Sachen removed
 #rm(IDNummer)
 ```
-Um sich einen Überblick über die Verteilung zu verschaffen, wird zunächst der Logistikverzug geplotet.
+Um den Logistikverzug darstellen zu können, wird zunächst ein statistischer Test durchgeführt, hier: Anderson-Darling-Test, der auch große Stichprobengrößen auf Normalverteilung prüfen kann.
 
-```{r}
-hist(Logistikverzug$AdjustierterVerzug, breaks=12, main="Histogram of Logistikverzug", xlab="Logistikverzug (days)")
-```
-
-
-Der Plot weist nicht auf eine Normalverteilung hin, dies wird nun noch mit einem statistischen Test überprüft.
-Es muss einer gewählt werden, der auch für große Stichprobenmengen geeignet ist, hier: Anderson-Darling-Test.
 ```{r}
 # Variable auswählen
-#var <- Logistikverzug$AdjustierterVerzug
-#n <- length(var)
-#n
-# Shapiro-Wilk-Test durchführen
-#shapiro.test( Logistikverzug$AdjustierterVerzug)
+var <- Logistikverzug$AdjustierterVerzug
 
 
-ad.test(Logistikverzug$AdjustierterVerzug)
+ad.test(var)
 ```
-
 Die Ausgabe des Anderson-Darling-Tests für die Variable "AdjustierterVerzug" gibt an, dass die Variable nicht normalverteilt ist. Das bedeutet, dass die Verteilung der Variable nicht der Normalverteilung entspricht. Der Test hat einen sehr kleinen p-Wert von weniger als 2,2e-16, was darauf hindeutet, dass die Nullhypothese der Normalverteilung abgelehnt werden sollte.
 
-Durch die Verteilung der Daten ergibt sich, dass ein Boxplot ist eine nützliche Möglichkeit, um die Verteilung zu visualisieren, wenn die Variable nicht normalverteilt ist.
-
+Durch die Verteilung der Daten ergibt sich, dass ein Boxplot eine nützliche Möglichkeit ist, um die Verteilung zu visualisieren, wenn die Variable nicht normalverteilt ist.
 ```{r}
 boxplot(var, col = "blue", main = "Verteilung der Variable")
 ```
-Da keine Normalverteilung vorliegt und der Plot den Verdacht der Schiefe erregt, wird nun auf diese geprüft.
+Da keine Normalverteilung vorliegt, wird nun auf Schiefe geprüft.
 ```{r}
 skewness(var)
 ```
-Die Schiefe (Skewness) ist eine statistische Maßzahl, die die Asymmetrie einer Verteilung beschreibt. Ein Wert von 0 bedeutet, dass die Verteilung symmetrisch ist. Wenn der Wert größer als 0 ist, dann deutet dies auf eine rechtsschiefe Verteilung hin, d.h. die Verteilung hat einen längeren rechten Schwanz im Vergleich zum linken Schwanz. Wenn der Wert kleiner als 0 ist, dann deutet dies auf eine linksschiefe Verteilung hin, d.h. die Verteilung hat einen längeren linken Schwanz im Vergleich zum rechten Schwanz.
 
-In diesem Fall ergab die Skewness den Wert von 0.55, was darauf hindeutet, dass die Verteilung wahrscheinlich rechtsschief ist. Dies bedeutet, dass die meisten Datenwerte näher am linken Ende der Verteilung liegen und es einige wenige Ausreißer auf der rechten Seite gibt, die zu einem längeren rechten Schwanz führen.
+Eine Schiefe von 0,55 weist darauf hin, dass die Verteilung leicht rechtsschief (rechtssteil) ist, da die Schiefe positiv ist.
 
-So eine Verteilung lässt sich sehr gut mit einem Densityplot darstellen, da man die Schiefe dort gut erkennen kann. Die Ausreißer ganz rechts werden damit nicht dargestellt, die Häufigkeit ist allerdings auch so gering, dass sie vernachlässigbar sind.
+
+Zusätzlich wird auf Multimodalität geprüft, was im Folgenden der Hartigans' Dip-Test übernimmt.
+```{r}
+dip.test(var)
+```
+Die Ausgabe des Hartigans' Dip-Tests zeigt, dass der Dip-Statistikwert (D) 0,12326 beträgt und der p-Wert kleiner als 2,2e-16 ist. Da der p-Wert deutlich kleiner als das übliche Signifikanzniveau von 0,05 ist, können wir die Nullhypothese der Unimodalität ablehnen. Dies legt nahe, dass die Verteilung der Variablen möglicherweise nicht unimodal ist und mindestens bimodal sein könnte. Dies kann auf zwei unterschiedliche Paketdienstleister zurückzuführen sein, die verwendet werden. Es wäre sinnvoll, herauszufinden, ob dem so ist und welcher dann zu welchem Preis schneller liefert.
+
+So eine bimodale rechtsschiefe Verteilung lässt sich sehr gut mit einem Densityplot darstellen, da man die Schiefe dort gut erkennen kann.
 ```{r}
 # Dichteplot erstellen
 densityplot <- density(var)
 plot(densityplot, main = "Verteilung des Logistikverzuges",ylab = "Dichte")
 ```
-## Task 1
 
-### Subtask a
-
+Aufgrund des Plots scheint eine Bimodalität eher unwahrscheinlich. Tendenziell gibt es mehr kurze Verzögerungen, aber es gibt auch einige ungewöhnlich lange Verzögerungen, diese sollten vom Unternehmen weiter untersucht werden.
+Einige wenige sehr große Ausreißer treiben das arithmetische Mittel hoch, diese treten jedoch selten auf, sodass davon auszugehen ist, dass sie durch höhere Umstände entstanden sind.
 
 
 ### Subtask b
@@ -159,16 +158,16 @@ p
 ```
 
 ## Task 2
-Datenintegrität: Eine relationale Datenbank bietet die Möglichkeit, Integritätsregeln wie z.B. Fremdschlüsselbeziehungen oder eindeutige Schlüssel festzulegen, um sicherzustellen, dass die Daten konsistent sind und nicht widersprüchlich. Dies kann Fehler bei der Dateneingabe und Probleme bei der Datenanalyse vermeiden.
+Datenintegrität ist in relationalen Datenbanken gewährleistet, da sie Integritätsregeln wie Fremdschlüsselbeziehungen oder eindeutige Schlüssel unterstützen. Dies hilft, konsistente und widerspruchsfreie Daten zu erhalten, wodurch Fehler bei der Dateneingabe und Probleme bei der Datenanalyse vermieden werden.
 
-Skalierbarkeit: Eine relationale Datenbank kann einfach erweitert werden, indem neue Tabellen hinzugefügt oder bestehende Tabellen erweitert werden. Dadurch können neue Datensätze einfach hinzugefügt werden, ohne dass die gesamte Datenbankstruktur geändert werden muss.
+In Bezug auf Skalierbarkeit erlauben relationale Datenbanken eine einfache Erweiterung, indem sie das Hinzufügen neuer Tabellen oder die Erweiterung bestehender Tabellen ermöglichen. So können neue Datensätze problemlos integriert werden, ohne dass die gesamte Datenbankstruktur geändert werden muss.
 
-Datenabfragen: Eine relationale Datenbank ermöglicht komplexe Datenabfragen, um spezifische Daten zu finden und zu analysieren. Durch die Verwendung von SQL-Abfragen können Daten leicht gefiltert, sortiert und gruppiert werden, um schnell Informationen zu finden und Trends zu identifizieren.
+Relationale Datenbanken bieten auch die Möglichkeit, komplexe Datenabfragen durchzuführen, um spezifische Daten zu finden und zu analysieren. Mithilfe von SQL-Abfragen können Benutzer Daten einfach filtern, sortieren und gruppieren, um schnell Informationen zu finden und Trends zu erkennen.
 
-Datensicherheit: Eine relationale Datenbank bietet mehrere Funktionen, um Daten zu schützen, z.B. die Möglichkeit, Zugriffsrechte auf Tabellen und Spalten zu beschränken. Dies kann sicherstellen, dass sensible Daten nur von autorisierten Personen eingesehen und bearbeitet werden können, um Datenschutz und Compliance-Anforderungen zu erfüllen.
+Darüber hinaus bieten relationale Datenbanken verschiedene Funktionen zur Datensicherheit, wie beispielsweise die Einschränkung von Zugriffsrechten auf Tabellen und Spalten. Dies trägt dazu bei, dass sensible Daten nur von autorisierten Personen eingesehen und bearbeitet werden können, um Datenschutz- und Compliance-Anforderungen zu erfüllen.
 
 
-ENTITY-DIAGRAM
+![Entityrelations-Diagramm](entityrelationsdiagram.png)
 
 ## Task 3
 ```{r}
@@ -185,21 +184,27 @@ kable(datatypes, row.names = FALSE, caption="Attribute der Datentypen", format="
 
 
 ## Task 4
+```{r, message=FALSE}
+if(!require("install.load")){
+  install.packages("install.load")
+}
+library(install.load)
+
+install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "purrr", "moments","tidyverse", "scales")
+```
 
 
+
+Der Datensatz wird eingelesen.
 ```{r}
-fehleranalyse <- read.csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv")
+fehleranalyse <- read.csv("Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv")
 
 ```
-Die eigentliche ID wird aus 
+
+Aus ID_Fahrzeug wird eine Zählvariable namens ID erstellt (damit man daraus eine zeitliche Reihenfolge ableiten kann). 
 ```{r}
 fehleranalyse <- fehleranalyse %>% mutate(ID = as.numeric(substr(ID_Fahrzeug, 9, nchar(ID_Fahrzeug))))
 ```
-kleineren Datensatz erstellen, da sonst Überlastung
-```{r}
-fehleranalyse_20P <- fehleranalyse[sample(x = nrow(fehleranalyse), size = nrow(fehleranalyse) / 5, replace = FALSE), ]
-```
-
 
 Um ein Modell erstellen zu können, müssen die Werte, die engine annehmen kann, in numerische Werte umgewandelt werden (sie werden Dummyvariablen zugeordnet).
 ```{r}
@@ -207,67 +212,105 @@ fehleranalyse$engine <- ifelse(fehleranalyse$engine == "small", 0,
                     ifelse(fehleranalyse$engine == "medium", 1, 2))
 ```
 
-```{r}
-#fehleranalyse$Spalte1<- as.numeric(as.character(fehleranalyse$Spalte1))
-#fehleranalyse_20P$Spalte1 <- floor(fehleranalyse_20P$Spalte1 / 10000)
-
-
-```
 ###
-Fehlerhaft_Fahrleistung wird auf die anderen gemünzt. Die Datumsangaben werden dabei nicht berücksichtigt, eine zeitliche Einordung wird anhand der ID-Nummer gemacht; je höher die ID, desto später produziert.Die Herstellernummer wird weggelassen, da nur ein Hersteller (Hersteller 1) im Datens dazu existiert. Es bleiben die ID_Fahrzeug (umgewandelt zur ID), days, fuel und engine (mit Dummyvariablen) und X1.
+Fehlerhaft_Fahrleistung wird ins Verhältnis zu den anderen Variablen gesetzt. X1 wird als Relikt des Zusammenführens der Datensätze nicht berücksichtigt. Die Datumsangaben werden dabei ebenfalls nicht berücksichtigt, eine zeitliche Einordung wird anhand der ID_Fahrzeug (jetzt: ID) gemacht; je höher die ID, desto später wurde es produziert. Die Herstellernummer wird weggelassen, da nur ein Hersteller (Hersteller 1) im Datensatz dazu existiert. Es bleiben engine (mit Dummyvariablen), Werksnummer, fuel, days und ID_Fahrzeug (umgewandelt zur ID)
 
 ```{r}
-lm_fahrleistung <- lm(Fehlerhaft_Fahrleistung ~ engine + Werksnummer + fuel + days, data = fehleranalyse_20P )
+lm_fahrleistung <- lm(Fehlerhaft_Fahrleistung ~ engine + Werksnummer + fuel + days + ID, data = fehleranalyse )
 
 ```
+Mit summary() kann man sich die wichtigsten Kennzahlen anzeigen lassen.
 ```{r}
 summary(lm_fahrleistung)
 ```
+Der Koeffizient für "engine" hat einen Wert von -4.713e+03 mit einem Standardfehler von 9.134e+01. Der t-Wert beträgt -51.596 und der p-Wert ist kleiner als 0,001, was bedeutet, dass der Koeffizient für "engine" signifikant von Null verschieden ist und somit einen wichtigen Beitrag zur Erklärung der abhängigen Variable leistet.
+
+Der Koeffizient für "Werksnummer" hat einen Wert von 3.101e+01 mit einem Standardfehler von 5.371e+01. Der t-Wert beträgt 0.577 und der p-Wert ist größer als 0,05, was bedeutet, dass der Koeffizient für "Werksnummer" nicht signifikant von Null verschieden ist und somit keinen wichtigen Beitrag zur Erklärung der abhängigen Variable leistet.
+
+Der Koeffizient für "fuel" hat einen Wert von 5.252e+03 mit einem Standardfehler von 1.827e+01. Der t-Wert beträgt 287.402 und der p-Wert ist kleiner als 0,001, was bedeutet, dass der Koeffizient für "fuel" signifikant von Null verschieden ist und somit einen wichtigen Beitrag zur Erklärung der abhängigen Variable leistet.
+
+Der Koeffizient für "days" hat einen Wert von -5.686e-02 mit einem Standardfehler von 9.005e-02. Der t-Wert beträgt -0.631 und der p-Wert ist größer als 0,05, was bedeutet, dass der Koeffizient für "days" nicht signifikant von Null verschieden ist und somit keinen wichtigen Beitrag zur Erklärung der abhängigen Variable leistet.
+
+Der Koeffizient für "ID" hat einen Wert von -2.059e-04 mit einem Standardfehler von 8.307e-05. Der t-Wert beträgt -2.478 und der p-Wert ist kleiner als 0,05, was bedeutet, dass der Koeffizient für "ID" signifikant von Null verschieden ist und somit einen wichtigen Beitrag zur Erklärung der abhängigen Variable leistet.
+
+Die relevanten Werte sind somit die Koeffizienten für "engine", "fuel" und "ID", da sie signifikant von Null verschieden sind und somit einen Einfluss auf die abhängige Variable haben. Der Koeffizient für "Werksnummer" und "days" sind nicht signifikant, was bedeutet, dass sie keinen Einfluss auf die abhängige Variable haben, daher werden sie im nächsten Run eliminiert.
+
+( Wertd die Zahlen aus, gehe dabei auf jeden Koeffizienten ein und bestimme dessen Wichtigkeit:)
 
 ```{r}
-lm_fahrleistung1 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + days + ID
-                       + Werksnummer + Herstellernummer, data = fehleranalyse )
-
-```
-
-```{r}
-summary(lm_fahrleistung1)
-```
-###
-Die Residuen (Min, 1Q, Median, 3Q, Max) sowie der residual standard error und die Freiheitsgrade können als sinnvoll betrachtet werden, da sie Informationen über die Verteilung der Abweichungen zwischen den tatsächlichen Beobachtungen und den Vorhersagen des Modells geben.
-
-Die Koeffizientenschätzer und die zugehörigen Standardfehler sowie die t-Werte und die p-Werte sind ebenfalls sinnvoll, da sie Informationen darüber liefern, wie stark und signifikant die einzelnen Prädiktoren die abhängige Variable beeinflussen.
-
-Die Variable "Herstellernummer" kann jedoch weggelassen werden, da sie keine Variabilität in der abhängigen Variable erklären kann und deshalb fehlende Werte (NA) aufweist. Das Modell könnte auch daraufhin überprüft werden, ob "days" sinnvoll ist, da der p-Wert hoch ist und darauf hinweist, dass der Effekt nicht signifikant ist.
-
-###
-```{r}
-lm_fahrleistung2 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + days + ID + X1, data = fehleranalyse)
+lm_fahrleistung2 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + ID
+                       , data = fehleranalyse )
 
 ```
 
 ```{r}
 summary(lm_fahrleistung2)
 ```
+###
+Alle drei Variablen haben p-Werte kleiner als 0.05, was darauf hindeutet, dass sie alle statistisch signifikant sind und einen Beitrag zur Vorhersage von Fehlerhaft_Fahrleistung leisten.
+fuel (T-Wert = 287.404) ist die am stärksten mit der abhängigen Variable Fehlerhaft_Fahrleistung verbundene Variable.
+engine (T-Wert = -51.601) ist ebenfalls stark mit der abhängigen Variable verbunden, aber weniger als fuel.
+ID (T-Wert = -2.787) hat die schwächste Verbindung mit der abhängigen Variable im Vergleich zu engine und fuel.
 
-Das erste Koeffizientenpaar ("Intercept" und "engine") zeigt, dass der geschätzte y-Achsenabschnitt (Intercept) bei 20.860 liegt, während der geschätzte Koeffizient für die unabhängige Variable engine -4.713 ist. Dies deutet darauf hin, dass, wenn alle anderen unabhängigen Variablen konstant bleiben, ein Anstieg der engine um eine Einheit zu einem Rückgang von 4.713 in der abhängigen Variablen führen würde. Beide Koeffizienten sind statistisch signifikant (p-Werte <0,05), was bedeutet, dass wir mit hoher Wahrscheinlichkeit annehmen können, dass sie nicht null sind.
+Es lässt sich ein kausaler Zusammenhang zwischen engine und fuel vermuten, da es logisch erscheint, dass größere Motoren mehr Treibstoff verbrauchen. 
 
-Das zweite Koeffizientenpaar ("fuel") zeigt einen geschätzten Koeffizienten von 5.252 für die unabhängige Variable fuel. Dies bedeutet, dass, wenn alle anderen unabhängigen Variablen konstant bleiben, eine Erhöhung von einer Einheit in der unabhängigen Variable fuel eine Erhöhung von 5.252 in der abhängigen Variablen bewirkt. Auch dieser Koeffizient ist statistisch signifikant.
+Dies wird mit dem Pearson-Korrelationskoeffizienten überprüft.
 
-Der geschätzte Koeffizient für "days" ist -0.05681, was bedeutet, dass ein Anstieg von einer Einheit in der unabhängigen Variable days zu einer Abnahme von 0.05681 in der abhängigen Variablen führen würde. Der p-Wert für diesen Koeffizienten ist jedoch größer als 0,05, was darauf hindeutet, dass wir nicht mit Sicherheit sagen können, ob der Koeffizient signifikant ist.
-
-Der Koeffizient für "ID" ist -0.0004693, was darauf hindeutet, dass ein Anstieg von einer Einheit in der unabhängigen Variable ID eine Abnahme von 0.0004693 in der abhängigen Variablen bewirkt. Der p-Wert für diesen Koeffizienten ist kleiner als 0,05, was darauf hinweist, dass dieser Koeffizient statistisch signifikant ist.
-
-Schließlich ist der Koeffizient für "X1" mit einem geschätzten Wert von 0.0001488 positiv, aber nicht statistisch signifikant, da der p-Wert größer als 0,05 ist.
-
-Insgesamt scheinen die Variablen engine und fuel die stärksten Prädiktoren für die abhängige Variable zu sein, während days und X1 weniger wichtige Prädiktoren sind.
+###
 
 ```{r}
-lm_fahrleistung3 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + ID +engine*fuel+engine*ID+fuel*ID+engine*fuel*ID
-, data = fehleranalyse )
+correlation_coefficient <- cor(fehleranalyse$fuel, fehleranalyse$engine)
+
+# Ausgabe des Korrelationskoeffizienten
+print(correlation_coefficient)
+```
+
+Ein Pearson-Korrelationskoeffizient von 0.818 zeigt eine starke positive Korrelation zwischen den beiden Variablen fuel und engine. Das bedeutet, dass wenn der Wert einer Variable tendenziell zunimmt, der Wert der anderen Variable ebenfalls tendenziell zunimmt: größere Motoren verbrauchen also wie vermutet mehr Treibstoff als kleinere.
+
+Im vorherigen Durchgang wies fuel mit einem T-Wert von 287.404 die stärksten Verbundenheit mit Fehlerhaft_Fahrleistung auf, daher folgt ein Durchgang nur mit der ID und fuel als stärker eingehende der beiden abhängigen Variablen.
+
+```{r}
+lm_fahrleistung3 <- lm(Fehlerhaft_Fahrleistung ~ ID + fuel, data = fehleranalyse )
 
 ```
 
 ```{r}
 summary(lm_fahrleistung3)
 ```
+Variante ohne engine:
+
+RSE: 11230
+Adjusted R-squared: 0.4755
+F-Statistik: 8.979e+04, p-Wert: < 2.2e-16
+
+Variante mit engine: 
+
+RSE: 11160
+Adjusted R-squared: 0.4825
+F-Statistik: 6.155e+04, p-Wert: < 2.2e-16
+
+Ein niedrigerer RSE-Wert zeigt ein besseres Modell an. In diesem Fall hat die Variante mit engine (RSE: 11160) einen niedrigeren RSE-Wert als Variante ohne engine (RSE: 11230), was darauf hindeutet, dass Variante 2 besser ist.
+Ein höherer Adjusted R-squared-Wert zeigt ein besseres Modell an. Variante mit enginge hat einen Adjusted R-squared-Wert von 0.4825, während Variante ohne engine einen Wert von 0.4755 hat. Daher ist Variante mit engine besser in Bezug auf die Anpassung an die Daten.Beide Modelle haben einen sehr niedrigen p-Wert (< 2.2e-16), was darauf hindeutet, dass die Modelle statistisch signifikant sind. In diesem Fall ist die F-Statistik allein nicht aussagekräftig genug, um die Modelle zu vergleichen. Insgesamt kann also festgestellt werden, dass das lineare Regressionsmodell mit diesen drei Parametern am geeignetsten ist, um einen Zusammenhang zu der Fahrleistung herzustellen.
+
+
+
+
+
+Zusammenfassend deutet die Analyse darauf hin, dass das Modell eine gute Erklärungskraft für die abhängige Variable hat und die unabhängigen Variablen signifikante Beiträge zur Erklärung der Variation der abhängigen Variable liefern. Die Residuen deuten jedoch darauf hin, dass das Modell möglicherweise noch verbessert werden kann, dafür benötigte es ein komplizierteres Modell oder neue Daten.
+
+
+
+Die Ergebnisse zeigen, dass alle drei unabhängigen Variablen (engine, fuel und ID) statistisch signifikant sind, da ihre p-Werte unter 0,05 liegen. Die Koeffizienten geben an, wie stark jede Variable das abhängige Ergebnis beeinflusst.
+
+Der Multiple R-Quadrat-Wert (0,4825) zeigt, dass das Modell etwa 48,25% der Varianz in den Daten erklären kann. Der Adjusted R-Quadrat-Wert ist ebenfalls 0,4825, was darauf hindeutet, dass die Anzahl der unabhängigen Variablen in diesem Modell angemessen ist.
+
+Der F-Statistik-Wert (6,155e+04) ist groß und der zugehörige p-Wert (< 2,2e-16) ist sehr klein, was bedeutet, dass das Modell insgesamt statistisch signifikant ist.
+
+Insgesamt ist das Modell statistisch signifikant und erklärt einen angemessenen Anteil der Varianz in den Daten. Dennoch ist die Streuung der Residuen relativ groß, was darauf hindeutet, dass das Modell möglicherweise nicht für alle Fälle perfekte Vorhersagen trifft. Es könnte hilfreich sein, weitere Variablen in das Modell aufzunehmen oder eine andere Modellierungstechnik auszuprobieren, um die Vorhersagegenauigkeit zu erhöhen.
+
+
+
+
+
+Die ID gibt an, wann das Auto gefertigt wurde. Je höher desto, desto geringer die Fahrleistung, bei der das Auto fehlerhaft wurde. Es lässt sich also ableiten, dass die Werke mit der Zeit schlechter gearbeitet haben könnten. Hier sollten regelmäßige Wartungs- und Qualitätskontrollarbeiten stattfinden. Je  größer engine, desto kleiner ist Fehlerhaft_Fahrleistung und damit das wünschenswerte Ergebnis. Es ist möglich, dass Autos mit größeren Motoren eher für lange Strecken und Autos mit kleineren Motoren eher für kurze Strecken in der Innenstadt benutzt werden, dies sollte mit Umfragen weiter bestimmt werden, um gesicherte Aussagen treffen zu können. Der Hersteller sollte allerdings für größere Motoren die Garantiezeit reduzieren, wenn es um Profitmaximierung geht. Für fuel gilt, dass ein höherer Treibstoffverbrauch eine längere Lebenszeit bedeutet. Hier sollte weiter untersucht werden, ob die Motoren möglicherweise zulasten der Lebensdauer optiminiert wurden.
+
