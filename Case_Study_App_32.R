@@ -31,6 +31,11 @@ ui <- fluidPage(
           height: 100%;
           background-color: Lightsteelblue;
         }
+        
+        /*change the color of the tab text*/
+        .nav-tabs>li>a {
+          color: black;
+        }
       ")
     )
   ),
@@ -73,7 +78,7 @@ ui <- fluidPage(
         tabPanel("Map",
                  leafletOutput("map"),
                  absolutePanel(
-                   top = 180, left = 20,
+                   top = 250, left = 20,
                    dropdownButton(
                      selectInput(inputId = 'map_selection',
                                  label = 'select which data to show',
@@ -180,7 +185,6 @@ server <- function(input, output) {
   #create the table to show the underlying data
   output$table <- DT::renderDT ({
     DT::datatable(final_data) 
-    #DT::datatable(selected_data()) ##this table only for test reasons
   })
   
   
