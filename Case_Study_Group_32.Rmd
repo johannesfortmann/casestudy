@@ -105,7 +105,7 @@ Due to the definition of a field-failure (see above), it is necessary to import 
 
 The two datasets containing the information about which specific components are installed in both types of vehicles are imported. Since different vehicles of the same type can have different types of components installed (e.g. a vehicle type 11 can contain either a component of type K3AG1 or of type K3SG1 as gearshift), the types of components installed in both types of vehicles are identified in a second step.
 
-*Note: For identifying the types of components installed in the respective vehicles new columns are added to the two imported dataframes (e.g. components_in_vehicle_type11$Engine_component_type). The component types were identified using a combination of the substring() and the regexpr() function. Afterwards all types of components installed in vehicle type 11 and/or type 12 are collected in an auxillary variable called 'components'.*
+*Note: For identifying the types of components installed in the respective vehicles new columns such as "Gearshift_component_type" are added to the two imported dataframes. The component types were identified using a combination of the substring() and the regexpr() function. Afterwards all types of components installed in vehicle type 11 and/or type 12 are collected in an auxiliary variable called 'components'.*
 
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
 # Import of components installed in type 11
@@ -413,7 +413,7 @@ Category | Imported Datasets | Corresponding Dataframe
 **Parts in Components** | Bestandteile_Komponente_K1BE1.csv, Bestandteile_Komponente_K1DI1.csv, Bestandteile_Komponente_K2LE1.csv, Bestandteile_Komponente_K2ST1.csv, Bestandteile_Komponente_K3AG1.csv, Bestandteile_Komponente_K3SG1.csv, Bestandteile_Komponente_K4.csv, Bestandteile_Komponente_K5.csv | parts_in_component_K1BE1, parts_in_component_K1DI1, parts_in_component_K2LE1, parts_in_component_K2ST1, parts_in_component_K3AG1, parts_in_component_K3SG1, parts_in_component_K4, parts_in_component_K5 
 **Individual Parts** | Einzelteil_T01.txt, Einzelteil_T02.txt, Einzelteil_T03.txt, Einzelteil_T04.csv, Einzelteil_T05.csv, Einzelteil_T06.csv., Einzelteil_T11.csv, Einzelteil_T12.csv, Einzelteil_T13.csv, Einzelteil_T14.csv, Einzelteil_T15.csv, Einzelteil_T21.csv, Einzelteil_T22.txt, Einzelteil_T23.csv, Einzelteil_T24.txt, Einzelteil_T25.csv, Einzelteil_T30.csv, Einzelteil_T31.txt, Einzelteil_T32.csv, Einzelteil_T33.csv | part_T01, part_T02, part_T03, part_T04, part_T05, part_T06, part_T11, part_T12, part_T13, part_T14, part_T15, part_T21, part_T22, part_T23, part_T24, part_T25, part_T30, part_T31, part_T32, part_T33   
   
-All in all the *total number of imported datasets* is *41*. 
+All in all the **total number of imported datasets** is **41**. 
 
 
 ## Data Preparation
@@ -790,7 +790,7 @@ glimpse(parts_in_component_K5)
 
 **Individual Parts**
 
-All datasets of individual parts were cleaned using similar operations as above. It is worth mentioning that columns within multiple dataframes of individual parts had to be merged using the combination of if_else() and is.na() statements.   
+All datasets of individual parts were cleaned using similar operations as above. It is worth mentioning that columns within multiple dataframes of individual parts had to be merged using a combination of if_else() and is.na() statements.   
 
 The results of the data cleaning process are demonstrated using the **part_T01 dataframe** as an example: 
 
@@ -959,9 +959,19 @@ part_T33 <- part_T33 %>%
 glimpse(part_T01)
 ```
 
+
 ## Generation of the Final Dataset
 
-... 
+After all of the 41 datasets were imported and cleaned the next step is to merge them into one final dataframe containing all relevant data. This was archived through an incremental process which generally proceeds as follows: Related dataframes were joined and than the resulting dataframe was cleaned again. 
+
+First the dataframes of the individual vehicle types ("vehicle_type11" and "vehicle_type12") which have identical columns were combined by row using the base function *rbind()*. In order to distinguish between the different both vehicle types, a column containing the vehicle type was added to both dataframes beforehand in the data cleaning phase. The resulting dataframe is called "all_vehicles".  
+Similarly, both dataframes containing the information about which specific components are installed in which vehicle ("components_in_vehicle_type11" and "components_in_vehicle_type12") were combined by row into a dataframe called "all_components_in_vehicles".
+
+Afterwards the dataframe "all_components_in_vehicles" was joined with the dataframes of the individual components such as "component_K1BE1" using dplyr's *left_join()* function. As described above the dataframes of the individual components contain only components which are marked as defective. A left join was chosen here because all of the components in the "all_components_in_vehicles" dataframe including components which are not marked as defective are needed because they might include individual parts which indeed are marked as defective. After joining the dataframes the resulting dataframe also called "all_components_in_vehicles" was cleaned again. Due to the joins it contained a component_XY_failure column and a component_XY_failure_date column for each individual component. As we are not interested in which specific component caused a field-failure, the component_XY_failure columns were combined into a single column called "component_failure" telling the user if at least one of the components in a specific vehicle is marked as defective. Additionally, the component_XY_failure_date columns containing the dates of a specific component failure were combined into a single column called "earliest_component_failure_date". In our analysis we are interested in the time it took until a vehicle became a field-failure. If for example multiple components within one vehicle failed, we are only interested in the timespan between the production data and the first component failure. Once the first failure occurred we are not interested in any component failure following. Finally, columns which are now redundant (e.g. component_K2LE1_failure, component_K2LE1_failure_date) were removed and the order of the remaining columns was rearranged.      
+
+*Note: The column "component_failure" was created using the following command: mutate(component_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)). This statement adds up all numeric values within each row. As of now the only columns containing numeric values were in fact the columns of the specific failures such as "component_K1BE1_failure".* 
+
+*Note: The column "earliest_component_failure_date" was added using the following command:   mutate(earliest_component_failure_date = pmin(component_K1BE1_failure_date, component_K1DI1_failure_date, component_K2LE1_failure_date, component_K2ST1_failure_date, component_K3AG1_failure_date, component_K3SG1_failure_date, component_K4_failure_date, component_K5_failure_date, na.rm = TRUE)). Fortunately the pmin() function works with dates of the format IDate as well.*
 
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
 # Combining all vehicles in one dataframe 
@@ -1136,7 +1146,7 @@ final_data <- final_data %>%
 ...
 
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
-# Exporting the final dataframe as csv. dataset
+# Exporting the final dataframe as .csv file
 fwrite(final_data, file ="Final_dataset_group_32.csv")
 ```
 
@@ -1154,7 +1164,7 @@ datatable(final_data %>% sample_n(200) , caption = "Final Dataset", colnames = c
 
 ## Sources
 
-[1]	Fachgebiet Qualitätswissenschaft, “Skript: Tidy,” Berlin, Nov. 08, 2023. [Online]. Available: https://isis.tu-berlin.de/pluginfile.php/2444052/mod_resource/content/1/VL04_Tidy.pdf
+[1] Fachgebiet Qualitätswissenschaft, “Skript: Tidy,” Berlin, Nov. 08, 2023. [Online]. Available: https://isis.tu-berlin.de/pluginfile.php/2444052/mod_resource/content/1/VL04_Tidy.pdf
 
 [2] "How data.table's fread can save you a lot of time and memory, and take input from shell commands", June 22, 2019. [Online]. Available: https://jozef.io/r917-fread-comparisons/#the-benchmarked-data  
 
