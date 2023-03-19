@@ -6,11 +6,12 @@ if(!require("install.load")){
 library(install.load)
 
 
-install_load("readr", "shiny", "leaflet", "htmltools", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes", "tidyverse") 
+install_load("readr", "shiny", "leaflet", "htmltools", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes", "tidyverse", "data.table") 
 #install_load("readr", "shiny", "leaflet", "htmltools", "dplyr", "ggplot2", "shinythemes", "shinyWidgets", "ggthemes" )
 
 #load the data
 final_data <- read.csv("Final_dataset_group_32.csv")
+#final_data <- final_data %>% sample_n(100000)
 
 
 
@@ -29,6 +30,11 @@ ui <- fluidPage(
         body {
           height: 100%;
           background-color: Lightsteelblue;
+        }
+        
+        /*change the color of the tab text*/
+        .nav-tabs>li>a {
+          color: black;
         }
       ")
     )
@@ -56,7 +62,9 @@ ui <- fluidPage(
           yes = tags$i(class = "fa fa-circle", style = "color: Lightsteelblue"),
           no = tags$i(class = "fa fa-circle-o", style = "color: Lightsteelblue")
         )
-      )
+      ),
+      img(src = "https://media.licdn.com/dms/image/C4E0BAQHliuj-kkUZ0g/company-logo_200_200/0/1611768200813?e=1686787200&v=beta&t=4mmNNxQ2OmYnTBlisQ4a2BAqk7_F925U9gSGOHuYmgU",
+          height = 200, width = 200, align = "left", style = "padding-top: 30px;")
     ),
     
     # Show a plot of the generated distribution
@@ -70,7 +78,7 @@ ui <- fluidPage(
         tabPanel("Map",
                  leafletOutput("map"),
                  absolutePanel(
-                   top = 180, left = 15,
+                   top = 250, left = 20,
                    dropdownButton(
                      selectInput(inputId = 'map_selection',
                                  label = 'select which data to show',
@@ -109,20 +117,36 @@ server <- function(input, output) {
   #adjust the data to the selected values
   selected_data <- reactive({
     final_data %>%
-      filter(vehicle_production_date >= input$production_period[1], 
-             vehicle_production_date <= input$production_period[2],
-             earliest_failure_date <= input$censoring_date,
-             vehicle_type %in% input$selected_vehicle_type)
+      mutate(earliest_failure_date = as.numeric(as.Date(earliest_failure_date)))%>%
+      replace_na(list(earliest_failure_date = 0))%>%
+      filter(vehicle_production_date >= input$production_period[1])%>%
+      filter(vehicle_production_date <= input$production_period[2])%>%
+      filter(earliest_failure_date <= as.numeric(input$censoring_date))%>%
+      filter(vehicle_type %in% input$selected_vehicle_type)%>%
+      mutate(earliest_failure_date = replace(earliest_failure_date, earliest_failure_date == 0, NA)) %>%
+      mutate(earliest_failure_date = as.Date(earliest_failure_date, origin = "1970-01-01"))
     
   })
   
   data_map <- reactive({
     if (input$map_selection == "b")
     {
-      group_by(selected_data(), location) %>% summarise(total = sum(is_failure)/nrow(selected_data()), latitude, longitude) %>% distinct() 
+      group_by(selected_data(), location) %>% summarise(total = sum(is_failure)/n(), latitude, longitude) %>% distinct() 
     }else if (input$map_selection == "a")
     {
-      group_by(selected_data(), location) %>% summarise(total = nrow(selected_data()), latitude, longitude) %>% distinct() 
+      group_by(selected_data(), location) %>% summarise(total = n(), latitude, longitude) %>% distinct() 
+    }else
+    {
+    }
+  })
+  
+  factor <- reactive({
+    if (input$map_selection == "b")
+    {
+      0.01 
+    }else if (input$map_selection == "a")
+    {
+      30000
     }else
     {
     }
@@ -137,9 +161,9 @@ server <- function(input, output) {
       #map theme
       addProviderTiles(providers$OpenStreetMap.DE) %>%
       #adds circle markers that have a size relative to the total number of cars...?
-      addCircleMarkers(lat = ~latitude, lng = ~longitude, label = ~total, radius = ~total/30000)
+      addCircleMarkers(lat = ~latitude, lng = ~longitude, label = ~total, radius = ~total/factor())
   })
-  
+
   
   
   
@@ -149,7 +173,6 @@ server <- function(input, output) {
   output$plot <- renderPlot({
     ggplot(selected_data(), aes(as.factor(vehicle_type), time_till_first_failure, fill = as.factor(vehicle_type)))+
       geom_boxplot(na.rm = TRUE)+
-      scale_x_discrete(labels = c("Type 11", "Type 12")) +
       scale_y_continuous(limits = c(0,800)) +
       labs(x = "Vehicle Type", y = "Lifetime in days") +
       ggtitle("Lifetime by Vehicle Type")+
@@ -162,7 +185,6 @@ server <- function(input, output) {
   #create the table to show the underlying data
   output$table <- DT::renderDT ({
     DT::datatable(final_data) 
-    #DT::datatable(selected_data()) ##this table only for test reasons
   })
   
   
