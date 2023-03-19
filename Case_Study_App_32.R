@@ -57,7 +57,9 @@ ui <- fluidPage(
           yes = tags$i(class = "fa fa-circle", style = "color: Lightsteelblue"),
           no = tags$i(class = "fa fa-circle-o", style = "color: Lightsteelblue")
         )
-      )
+      ),
+      img(src = "https://media.licdn.com/dms/image/C4E0BAQHliuj-kkUZ0g/company-logo_200_200/0/1611768200813?e=1686787200&v=beta&t=4mmNNxQ2OmYnTBlisQ4a2BAqk7_F925U9gSGOHuYmgU",
+          height = 200, width = 200, align = "left", style = "padding-top: 30px;")
     ),
     
     # Show a plot of the generated distribution
