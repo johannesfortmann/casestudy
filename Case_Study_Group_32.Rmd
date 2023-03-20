@@ -564,7 +564,7 @@ glimpse(vehicle_type11)
 
 #### Cleaning the Datasets of Manufacturing Plants 
 
-In a similar way the dataframe containing all information regarding the manufacturing plants was cleaned. Beyond renaming all columns, changing categorical data to the datatype factor and deleting unncessary columns, it is worth mentioning that the names of the manufacturing plants were simplified using the *substring()* function (e.g. "O11" --> 11). 
+In a similar way the dataframe containing all information regarding the manufacturing plants was cleaned. Beyond renaming all columns, changing categorical data to the datatype factor and deleting unncessary columns, it is worth mentioning that the names of the manufacturing plants were simplified using the *substring()* function (e.g. "O11" --> "11"). 
 
 The resulting **oem_locations dataframe** has the following structure:         
 
@@ -962,9 +962,9 @@ glimpse(part_T01)
 
 ## Final Dataset
 
-### Creation of the Final Dataset
+### Creation 
 
-After all of the 41 datasets were imported and cleaned the next step is to merge them into one final dataframe containing all relevant data. This was archived through an incremental process which generally proceeds as follows: Related dataframes were joined and than the resulting dataframe was cleaned again. 
+After all of the 41 datasets were imported and cleaned the next step is to merge them into one final dataframe containing all relevant data. This was archived through an incremental process which generally proceeds as follows: related dataframes were joined and than the resulting dataframe was cleaned again. 
 
 First the dataframes of the individual vehicle types ("vehicle_type11" and "vehicle_type12") which have identical columns were combined by row using the base function *rbind()*. In order to distinguish between the different both vehicle types, a column containing the vehicle type was added to both dataframes beforehand in the data cleaning phase. The resulting dataframe is called "all_vehicles".  
 Similarly, both dataframes containing the information about which specific components are installed in which vehicle ("components_in_vehicle_type11" and "components_in_vehicle_type12") were combined by row into a dataframe called "all_components_in_vehicles".
@@ -986,10 +986,10 @@ Up to now dataframe called "all_components_in_vehicles" containes for each vehic
 In a last step the dataframes "all_vehicles" was joind with the dataframe "all_components_in_vehicles" and "oem_locations" using the *left_join()* function, further simplified as well as complemented with new columns. A *left_join()* was applied since we want to keep all vehicles including the ones in which no component or part has caused a failure in the "all_vehicles" dataframe. The column "field_failure" was added by combining the "vehicle_failure" and the "part_or_component_failure" column. In addition, the columns "vehicle_failure_date" and "earliest_part_or_component_failure_date" were combined into the "earliest_failure_date" column. Moreover, two columns which are relevant for our analysis of the vehicles quality were added. The column "vehicle_lifespan" contains the timespan [in days] between the production date and date on which the vehicle was marked as defective. The "time_till_first_failure" column on the other hand contains the timespan [in days] between the production date and the date of the first failure (= failure of the vehicle itself **or** a built-in component **or** a built-in part). Additionally, columns such as "field_failure" which contain categorical data and have not been set to factors in the Data Cleaning chapter were converted into factors. Finally, due to reasons of clarity the order of columns was rearranged.                     
 
 *Note: The "vehicle_lifespan" column as well as the "time_till_first_failure" column were both added using a combination of the difftime() and as.numeric() function. Additionally, a if_else() statement was added to ensure that the "vehicle_lifespan" column remained empty (NA) in case the vehicle itself was not marked as defective and the "time_till_first_failure" column remained empty if no field-failure occurred at all.*
-*The following command added the "time_till_first_failure" column: *
+*The following command added the "time_till_first_failure" column:*
 *'mutate(time_till_first_failure = if_else(field_failure == 1, as.numeric(difftime(earliest_failure_date, vehicle_production_date)), NA))'*
 
-The final dataframe called "final_data" has the following structure: 
+The **final dataframe** called "final_data" has the following **structure**: 
  
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
 # Combining all vehicles in one dataframe 
@@ -1164,22 +1164,39 @@ final_data <- final_data %>%
 glimpse(final_data)
 ```
 
-In order to incorperate the "final_data" dataframe into our shiny application, the dataframe is exported as .csv file using the *fwrite()* function from the "data.table" package.  
+
+### Presentation 
+
+The goal of this chapter is to present and explain the final dataset. In order to provide the maximum of transparency and to avoid any misunderstandings as well as ambiguities the difference between a **vehicle failure** and a **field-failure** as well as all of the corresponding columns are comprehensively explained:    
+
+* **Vehicle failure ($vehicle_failure)**: is of the datatype factor and has two levels: `r levels(final_data$vehicle_failure)`. Vehicles which are not marked as defective are denoted with `r levels(final_data$vehicle_failure)[1]` whereas vehicles which are marked as defective are denoted with `r levels(final_data$vehicle_failure)[2]`. This column **does not** directly indicate whether vehicles are a field-failure or not. Vehicles which have a 0 in this column can still include part(s) and/or component(s) which are marked defective and are therefore a field-failure. We did include this column in the final dataset in order to distinguish between minor failures such as a component or part failure and an severe failure resulting in the entire vehicle being marked as defective. 
+* **Vehicle Failure Date ($vehicle_failure_date)**: contains the data when the respective vehicle was marked as defective. This column **does not** contain the date when a vehicle became a field-failure. 
+* **Vehicle Lifespan ($vehicle_lifespan)**: contains the timespan [in days] between the production date and the vehicle failure date. We consider this timespan to be the lifespan of a vehicle. 
+
+* **Field-Failure ($field_failure)**: is of the datatype factor and has two levels: `r levels(final_data$field_failure)`. If marked as `r levels(final_data$field_failure)[2]` the respective vehicle is a field-failure. **In this case the vehicle itself and/or at least one built-in component and/or at least one built-in part were marked as defective in the original datasets**.
+* **Earliest Failure Date ($earliest_failure_date)**: if a vehicle is a field-failure, this column contains the date of the first failure which occurred. In other words if multiple failures (e.g. overall two components and three parts have failed) occurred in the same vehicle, this column contains only the date of the earliest failure. 
+* **Time till first Failure ($time_till_first_failure)**: contains the timespan [in days] between the production date and the earliest failure date. In other words, this column contains the number of days it took until a vehicle became a field-failure.  
+
+Overall the "final_data" dataframe has `r nrow(final_data)` rows and `r ncol(final_data)` columns. In order to drastically reduce the computing time we present a randomly selected sample (n = 200) of our final dataframe using the *datatable()* function from the "DT" package down below:   
+
+*Note: The randomly selected sample was created using dplyr's sample_n() function.*
+
+*Note: For reasons of readableness and clarity the dataframe's column names were slightly changed using the function's  caption argument (e.g. "id_vehicle" --> "Vehicle ID").*
+
+```{r, message=FALSE, warning = FALSE, cache = TRUE}
+# Overview over the final dataframe 
+datatable(final_data %>% sample_n(200), caption = "Randomly selected Sample of the Final Dataset (n = 200)", colnames = c("Vehicle ID" = "id_vehicle", "Vehicle Type" = "vehicle_type", "Manufacturing Plant" = "plant", "Location" = "location", "Latitude" = "latitude", "Longitude" = "longitude", "Production date" = "vehicle_production_date", "Vehicle Failure" = "vehicle_failure", "Vehicle Failure Date" = "vehicle_failure_date", "Vehicle Lifespan" = "vehicle_lifespan", "Field-Failure" = "field_failure", "Earliest Failure Date" = "earliest_failure_date", "Time till first Failure" = "time_till_first_failure"))
+```
+
+
+### Export 
+
+In order to incorporate the "final_data" dataframe into our shiny application, the dataframe is exported as .csv file using the *fwrite()* function from the "data.table" package.  
 
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
 # Exporting the final dataframe as .csv file
 fwrite(final_data, file ="Final_dataset_group_32.csv")
 ```
-
-### Presentation of the Final Dataset
-
-... 
-
-```{r, message=FALSE, warning = FALSE, cache = TRUE}
-# Overview over the final dataframe
-datatable(final_data %>% sample_n(200), caption = "Final Dataset", colnames = c("Vehicle ID" = "id_vehicle", "Vehicle Type" = "vehicle_type", "Manufacturing Plant" = "plant", "Location" = "location", "Latitude" = "latitude", "Longitude" = "longitude", "Production date" = "vehicle_production_date", "Vehicle Failure" = "vehicle_failure", "Vehicle Failure Date" = "vehicle_failure_date", "Vehicle Lifespan" = "vehicle_lifespan", "Field-Failure" = "field_failure", "Earliest Failure Date" = "earliest_failure_date", "Time till first Failure" = "time_till_first_failure"))
-```
-
 
 ## Evaluation
 
