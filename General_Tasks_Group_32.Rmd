@@ -136,24 +136,14 @@ Der Mittelwert beträgt damit 4.223554 Tage.
 
 Neben dem ausreißeranfälligen arithmetischen Mittel gibt es noch den Median, dieser könnte ein geeigneteres Maß für die Zentralität der Verteilung sein, wenn die Verteilung rechtsschief ist. Je nach Schlussfolgerung, die aus den Daten gezogen werden soll, kann auch der Modus, also der am häufigsten vorkommende Wert in einer Datenmenge, sinnvoll sein. Ginge es darum, die Anzahl der Tage möglichst oft genau zu treffen, dann ist dieser Wert am relevantesten, geht es darum, möglichst oft in der Nähe des Wertes zu sein, dann ist es der Median und um sich ein Überblick zu verschaffen, reicht das arithmetische Mittel, ist allerdings aufgrund der Schiefe kritisch zu betrachten. 
 
-
-```{r}
-#hist(Logistikverzug$AdjustierterVerzug, breaks=10, main="Logistikverzug Histogramm", xlab="Logistikverzug (Tage)")
-#y-Achse umbennen
-# Histogramm erstellen und y-Achse umbenennen
-#hist(Logistikverzug$AdjustierterVerzug, breaks=10, main="Logistikverzug Histogramm", xlab="Logistikverzug (Tage)", ylab="Häufigkeit")
-
-```
 ### Subtask d
 Für die schiefe Verteilung eignet sich ein Histogramm sehr gut, hier mit Plotly realisiert.
 ```{r}
-# Histogramm erstellen
 p <- plot_ly(Logistikverzug, x = ~AdjustierterVerzug, type = "histogram", nbinsx = 10)
 
-# Layout anpassen
+
 p <- p %>% layout(title = "Logistikverzug Histogram", xaxis = list(title = "Logistikverzug (days)"), yaxis = list(title = "Häufigkeit"))
 
-# Histogramm anzeigen
 p
 ```
 
@@ -194,7 +184,6 @@ install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "purrr", "moments",
 ```
 
 
-
 Der Datensatz wird eingelesen.
 ```{r}
 fehleranalyse <- read.csv("Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv")
@@ -212,7 +201,7 @@ fehleranalyse$engine <- ifelse(fehleranalyse$engine == "small", 0,
                     ifelse(fehleranalyse$engine == "medium", 1, 2))
 ```
 
-###
+
 Fehlerhaft_Fahrleistung wird ins Verhältnis zu den anderen Variablen gesetzt. X1 wird als Relikt des Zusammenführens der Datensätze nicht berücksichtigt. Die Datumsangaben werden dabei ebenfalls nicht berücksichtigt, eine zeitliche Einordung wird anhand der ID_Fahrzeug (jetzt: ID) gemacht; je höher die ID, desto später wurde es produziert. Die Herstellernummer wird weggelassen, da nur ein Hersteller (Hersteller 1) im Datensatz dazu existiert. Es bleiben engine (mit Dummyvariablen), Werksnummer, fuel, days und ID_Fahrzeug (umgewandelt zur ID)
 
 ```{r}
@@ -235,7 +224,6 @@ Der Koeffizient für "ID" hat einen Wert von -2.059e-04 mit einem Standardfehler
 
 Die relevanten Werte sind somit die Koeffizienten für "engine", "fuel" und "ID", da sie signifikant von Null verschieden sind und somit einen Einfluss auf die abhängige Variable haben. Der Koeffizient für "Werksnummer" und "days" sind nicht signifikant, was bedeutet, dass sie keinen Einfluss auf die abhängige Variable haben, daher werden sie im nächsten Run eliminiert.
 
-( Wertd die Zahlen aus, gehe dabei auf jeden Koeffizienten ein und bestimme dessen Wichtigkeit:)
 
 ```{r}
 lm_fahrleistung2 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + ID
@@ -246,7 +234,7 @@ lm_fahrleistung2 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + ID
 ```{r}
 summary(lm_fahrleistung2)
 ```
-###
+
 Alle drei Variablen haben p-Werte kleiner als 0.05, was darauf hindeutet, dass sie alle statistisch signifikant sind und einen Beitrag zur Vorhersage von Fehlerhaft_Fahrleistung leisten.
 fuel (T-Wert = 287.404) ist die am stärksten mit der abhängigen Variable Fehlerhaft_Fahrleistung verbundene Variable.
 engine (T-Wert = -51.601) ist ebenfalls stark mit der abhängigen Variable verbunden, aber weniger als fuel.
@@ -256,12 +244,12 @@ Es lässt sich ein kausaler Zusammenhang zwischen engine und fuel vermuten, da e
 
 Dies wird mit dem Pearson-Korrelationskoeffizienten überprüft.
 
-###
+
 
 ```{r}
 correlation_coefficient <- cor(fehleranalyse$fuel, fehleranalyse$engine)
 
-# Ausgabe des Korrelationskoeffizienten
+
 print(correlation_coefficient)
 ```
 
@@ -297,8 +285,6 @@ Ein höherer Adjusted R-squared-Wert zeigt ein besseres Modell an. Variante mit 
 
 
 Zusammenfassend deutet die Analyse darauf hin, dass das Modell eine gute Erklärungskraft für die abhängige Variable hat und die unabhängigen Variablen signifikante Beiträge zur Erklärung der Variation der abhängigen Variable liefern. Die Residuen deuten jedoch darauf hin, dass das Modell möglicherweise noch verbessert werden kann, dafür benötigte es ein komplizierteres Modell oder neue Daten.
-
-
 
 Die Ergebnisse zeigen, dass alle drei unabhängigen Variablen (engine, fuel und ID) statistisch signifikant sind, da ihre p-Werte unter 0,05 liegen. Die Koeffizienten geben an, wie stark jede Variable das abhängige Ergebnis beeinflusst.
 
