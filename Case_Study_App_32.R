@@ -18,7 +18,7 @@ final_data <- read.csv("Final_dataset_group_32.csv")
 # Define UI for application
 ui <- fluidPage(
   
-  # load the font awesome library (necessary for the checkbox group)
+  # load the r (necessary for the checkbox group)
   tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")),             
   
   # Application title
@@ -42,12 +42,13 @@ ui <- fluidPage(
   
   # create the sidebar layout
   sidebarLayout(
+    # create a sidebar panel with input controls
     sidebarPanel(
       
       #input for censoring date
       dateInput("censoring_date", "Censoring date of the analysis", value = max(final_data$earliest_failure_date )), 
       
-      #input for production period
+      # create a date input control for the censoring dater
       dateRangeInput("production_period", "Production period of the vehicles", start = min(final_data$vehicle_production_date), max(final_data$vehicle_production_date)),
       
       # create the checkbox group for the car selection
@@ -63,6 +64,8 @@ ui <- fluidPage(
           no = tags$i(class = "fa fa-circle-o", style = "color: Lightsteelblue")
         )
       ),
+      
+      # add an image to the sidebar panel
       img(src = "https://media.licdn.com/dms/image/C4E0BAQHliuj-kkUZ0g/company-logo_200_200/0/1611768200813?e=1686787200&v=beta&t=4mmNNxQ2OmYnTBlisQ4a2BAqk7_F925U9gSGOHuYmgU",
           height = 200, width = 200, align = "left", style = "padding-top: 30px;")
     ),
