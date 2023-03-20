@@ -12,13 +12,13 @@ output:
 Als erstes werden die benötigten Pakete installiert bzw. geladen.
 ## Library
 
-```{r, message=FALSE }
+```{r,message=FALSE,warning=FALSE}
 if(!require("install.load")){
   install.packages("install.load")
 }
 library(install.load)
 
-install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "modeest","diptest", "moments","tidyverse", "scales","nortest")
+install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "modeest","diptest","DescTools", "moments","fitdistrplus","tidyverse", "scales","nortest")
 ```
 
 
@@ -26,20 +26,9 @@ install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "modeest","diptest"
 
 ### Subtask a
 Arbeits-Datensatz erstellen:
-Zunächst muss ein arbeitsfähiger Datensatz erstellt werden, dafür werden zuerst alle nötigen Pakete installiert und geladen werden.
+Zunächst werden die beiden benötigten Dateien geladen.
 
-```{r, message=FALSE }
-if(!require("install.load")){
-  install.packages("install.load")
-}
-library(install.load)
-
-install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "modeest","diptest", "moments","tidyverse", "scales","nortest")
-```
-
-Dann werden die beiden benötigten Dateien geladen. 
-
-```{r }
+```{r,message=FALSE,warning=FALSE}
 Komponente_K7 <- read.csv2("Data/Logistikverzug/Komponente_K7.csv")
 Logistikverzug_K7 <- read.csv("Data/Logistikverzug/Logistikverzug_K7.csv",sep=";")
 ```
@@ -47,81 +36,109 @@ Es fällt auf, dass sechs Komponenten fehlerhaft sind, dies spielt für den Arbe
 
 Die nötigen Daten aus den Tabellen werden unter Angabe ihrer IDNummer zusammengefügt.
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 Logistikverzug <- merge(x = Komponente_K7[,c("IDNummer", "Produktionsdatum")], y = Logistikverzug_K7[ , c("IDNummer","Wareneingang")], by = "IDNummer")
 
 ```
 Das Datumsformat aus Logistikverzug_K7 wird ins gleiche Format umgewandelt wie jenes aus Komponente_K7.
-```{r}
+```{r,message=FALSE,warning=FALSE}
 Logistikverzug$Wareneingang <- as.Date(strptime(Logistikverzug$Wareneingang, format = "%d.%m.%Y"), format = "%Y-%m-%a")
 
 ```
 Es wird eine zusätzliche Spalte erzeugt mit den Wochentagen.
-```{r}
+```{r,message=FALSE,warning=FALSE}
 Logistikverzug$Wochentag = weekdays(as.Date(Logistikverzug$Produktionsdatum))
 ```
 Es wird ein Tag extra auf den Wareneingang für alle Samstage addiert.
-```{r}
+```{r,message=FALSE,warning=FALSE}
 samstagZeilen <- which(Logistikverzug$Wochentag == "Samstag")
 Logistikverzug$Wareneingang[samstagZeilen] <- Logistikverzug$Wareneingang[samstagZeilen] +1
 
 ```
 Nun wird für alle Differenzen zwischen Wareneingang und Produktionsdatum die Differenz um 1 vermindert. Somit werden für die Samstage nun zwei Tage berücksichtigt und für alle anderen Tage einer. 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 Logistikverzug$AdjustierterVerzug<-as.integer( as.Date(Logistikverzug$Wareneingang) - as.Date(Logistikverzug$Produktionsdatum)-1) 
 ```
-```{r}
-#hier werden noch Sachen removed
-#rm(IDNummer)
-```
-Um den Logistikverzug darstellen zu können, wird zunächst ein statistischer Test durchgeführt, hier: Anderson-Darling-Test, der auch große Stichprobengrößen auf Normalverteilung prüfen kann.
 
-```{r}
-# Variable auswählen
-var <- Logistikverzug$AdjustierterVerzug
+Um den Logistikverzug darstellen zu können, wird zunächst ein statistischer Test durchgeführt, hier: Kolmogorow-Smirnow-Test, der auch große Stichprobengrößen auf Normalverteilung prüfen kann.
 
 
-ad.test(var)
-```
-Die Ausgabe des Anderson-Darling-Tests für die Variable "AdjustierterVerzug" gibt an, dass die Variable nicht normalverteilt ist. Das bedeutet, dass die Verteilung der Variable nicht der Normalverteilung entspricht. Der Test hat einen sehr kleinen p-Wert von weniger als 2,2e-16, was darauf hindeutet, dass die Nullhypothese der Normalverteilung abgelehnt werden sollte.
-
-Durch die Verteilung der Daten ergibt sich, dass ein Boxplot eine nützliche Möglichkeit ist, um die Verteilung zu visualisieren, wenn die Variable nicht normalverteilt ist.
-```{r}
-boxplot(var, col = "blue", main = "Verteilung der Variable")
-```
-Da keine Normalverteilung vorliegt, wird nun auf Schiefe geprüft.
-```{r}
-skewness(var)
+```{r,message=FALSE,warning=FALSE}
+s <- sd(Logistikverzug$AdjustierterVerzug)
 ```
 
-Eine Schiefe von 0,55 weist darauf hin, dass die Verteilung leicht rechtsschief (rechtssteil) ist, da die Schiefe positiv ist.
+
+Zur systematischen Testung wird ein Lilliefors-Test benutzt, da dieser auch Daten mit Bindungen analysieren kann.
+
+```{r,message=FALSE,warning=FALSE}
+lillie.test(Logistikverzug$AdjustierterVerzug)
+```
+Die Ergebnisse des Lilliefors-Tests zeigen, dass der P-Wert (< 2.2e-16) kleiner als das Signifikanzniveau von 0,05 ist. Das bedeutet, dass die Nullhypothese einer Normalverteilung für den adjustierten Verzug abzulehnen ist. Die Daten sind also wahrscheinlich nicht normalverteilt.
+
+
+```{r,message=FALSE,warning=FALSE}
+# verschiedene Verteilungen
+fit_exp <- fitdist(Logistikverzug$AdjustierterVerzug, "exp") # Exponentialverteilung
+fit_gamma <- fitdist(Logistikverzug$AdjustierterVerzug, "gamma") # Gammaverteilung
+fit_lognorm <- fitdist(Logistikverzug$AdjustierterVerzug, "lnorm") # Log-Normalverteilung
+fit_weibull <- fitdist(Logistikverzug$AdjustierterVerzug, "weibull") # Weibullverteilung
+
+# Vergleich der Verteilungen
+gofstat(list(fit_exp, fit_gamma, fit_lognorm, fit_weibull))
+
+```
+Die Gammaverteilung (2-mle-gamma) weist die niedrigsten AIC- und BIC-Werte auf (AIC = 896423.1, BIC = 896444.4). Daher scheint die Gammaverteilung die am besten geeignete Verteilung zu sein.
+
+Nun wird die Verteilung noch einmal grafisch über die Daten gelegt:
+```{r,message=FALSE,warning=FALSE}
+# Parameter der Gammaverteilung
+gamma_shape <- fit_gamma$estimate["shape"]
+gamma_rate <- fit_gamma$estimate["rate"]
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+# Histogramm der Daten erstellen
+hist(Logistikverzug$AdjustierterVerzug, probability = TRUE, col = "lightblue", border = "black", main = "Histogramm mit Gammaverteilung", xlab = "Adjustierter Verzug", ylab = "Dichte")
+
+# Gammaverteilung hinzufügen
+curve(dgamma(x, shape = gamma_shape, rate = gamma_rate), col = "red", lwd = 2, add = TRUE)
+
+```
+```{r,message=FALSE,warning=FALSE}
+sd(Logistikverzug$AdjustierterVerzug)
+```
+```{r,message=FALSE,warning=FALSE}
+skewness(Logistikverzug$AdjustierterVerzug)
+```
+Die Verteilung passt sehr gut zu den Daten, sie ist leicht rechtsschief und weist eine recht hohe Standardabweichung auf, die Versand ist damit nicht besonders zuverlässig.
 
 
 Zusätzlich wird auf Multimodalität geprüft, was im Folgenden der Hartigans' Dip-Test übernimmt.
-```{r}
-dip.test(var)
+```{r,message=FALSE,warning=FALSE}
+dip.test(Logistikverzug$AdjustierterVerzug)
 ```
 Die Ausgabe des Hartigans' Dip-Tests zeigt, dass der Dip-Statistikwert (D) 0,12326 beträgt und der p-Wert kleiner als 2,2e-16 ist. Da der p-Wert deutlich kleiner als das übliche Signifikanzniveau von 0,05 ist, können wir die Nullhypothese der Unimodalität ablehnen. Dies legt nahe, dass die Verteilung der Variablen möglicherweise nicht unimodal ist und mindestens bimodal sein könnte. Dies kann auf zwei unterschiedliche Paketdienstleister zurückzuführen sein, die verwendet werden. Es wäre sinnvoll, herauszufinden, ob dem so ist und welcher dann zu welchem Preis schneller liefert.
 
-So eine bimodale rechtsschiefe Verteilung lässt sich sehr gut mit einem Densityplot darstellen, da man die Schiefe dort gut erkennen kann.
-```{r}
+So eine möglicherweise bimodale rechtsschiefe Verteilung liese sich sehr gut mit einem Densityplot darstellen, da man die Schiefe dort gut erkennen könnte.
+```{r,message=FALSE,warning=FALSE}
 # Dichteplot erstellen
-densityplot <- density(var)
+densityplot <- density(Logistikverzug$AdjustierterVerzug)
 plot(densityplot, main = "Verteilung des Logistikverzuges",ylab = "Dichte")
 ```
-
-Aufgrund des Plots scheint eine Bimodalität eher unwahrscheinlich. Tendenziell gibt es mehr kurze Verzögerungen, aber es gibt auch einige ungewöhnlich lange Verzögerungen, diese sollten vom Unternehmen weiter untersucht werden.
+Aufgrund des Plots scheint eine Bimodalität unwahrscheinlich. Tendenziell gibt es mehr kurze Verzögerungen, aber es gibt auch einige ungewöhnlich lange Verzögerungen, diese sollten vom Unternehmen weiter untersucht werden.
 Einige wenige sehr große Ausreißer treiben das arithmetische Mittel hoch, diese treten jedoch selten auf, sodass davon auszugehen ist, dass sie durch höhere Umstände entstanden sind.
 
 
 ### Subtask b
 Aufgabe b) Der minimale Verzug und der maximaler Verzug werden bestimmt.
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 min(Logistikverzug$AdjustierterVerzug)
 ```
 Der Minimalwert beträgt damit 1.
-```{r}
+```{r,message=FALSE,warning=FALSE}
 max(Logistikverzug$AdjustierterVerzug)
 ```
 Der Maximalwert beträgt damit 12.
@@ -129,39 +146,62 @@ Der Maximalwert beträgt damit 12.
 
 ### Subtask c
 Der Mittelwert ist zu bestimmten und Alternativen dazu zu benennen.
-```{r}
+```{r,message=FALSE,warning=FALSE}
 mean(Logistikverzug$AdjustierterVerzug)
 ```
 Der Mittelwert beträgt damit 4.223554 Tage.
 
 Neben dem ausreißeranfälligen arithmetischen Mittel gibt es noch den Median, dieser könnte ein geeigneteres Maß für die Zentralität der Verteilung sein, wenn die Verteilung rechtsschief ist. Je nach Schlussfolgerung, die aus den Daten gezogen werden soll, kann auch der Modus, also der am häufigsten vorkommende Wert in einer Datenmenge, sinnvoll sein. Ginge es darum, die Anzahl der Tage möglichst oft genau zu treffen, dann ist dieser Wert am relevantesten, geht es darum, möglichst oft in der Nähe des Wertes zu sein, dann ist es der Median und um sich ein Überblick zu verschaffen, reicht das arithmetische Mittel, ist allerdings aufgrund der Schiefe kritisch zu betrachten. 
 
-### Subtask d
-Für die schiefe Verteilung eignet sich ein Histogramm sehr gut, hier mit Plotly realisiert.
-```{r}
-p <- plot_ly(Logistikverzug, x = ~AdjustierterVerzug, type = "histogram", nbinsx = 10)
-
-
-p <- p %>% layout(title = "Logistikverzug Histogram", xaxis = list(title = "Logistikverzug (days)"), yaxis = list(title = "Häufigkeit"))
-
-p
+```{r,message=FALSE,warning=FALSE}
+median(Logistikverzug$AdjustierterVerzug)
+```
+```{r,message=FALSE,warning=FALSE}
+Mode(Logistikverzug$AdjustierterVerzug)
 ```
 
+
+### Subtask d
+Für die schiefe Verteilung eignet sich ein Histogramm sehr gut, hier mit Plotly realisiert.
+
+```{r,message=FALSE,warning=FALSE}
+# Histogramm erstellen
+hist_plot <- plot_ly(Logistikverzug, x = ~AdjustierterVerzug, type = "histogram", nbinsx = 30, marker = list(color = "rgba(0, 107, 164, 0.7)", line = list(color = "rgba(0, 107, 164, 1)", width = 1)))
+
+# Achsenbeschriftungen und Titel hinzufügen
+hist_plot <- hist_plot %>%
+  layout(title = "Histogramm der Versanddauer",
+         xaxis = list(title = "Adjustierter Verzug"),
+         yaxis = list(title = "Häufigkeit"))
+
+# Histogramm anzeigen
+hist_plot
+
+```
+
+
+
+
+
+
+
+
+
 ## Task 2
-Datenintegrität ist in relationalen Datenbanken gewährleistet, da sie Integritätsregeln wie Fremdschlüsselbeziehungen oder eindeutige Schlüssel unterstützen. Dies hilft, konsistente und widerspruchsfreie Daten zu erhalten, wodurch Fehler bei der Dateneingabe und Probleme bei der Datenanalyse vermieden werden.
 
-In Bezug auf Skalierbarkeit erlauben relationale Datenbanken eine einfache Erweiterung, indem sie das Hinzufügen neuer Tabellen oder die Erweiterung bestehender Tabellen ermöglichen. So können neue Datensätze problemlos integriert werden, ohne dass die gesamte Datenbankstruktur geändert werden muss.
+Eine relationale Datenbank bietet zahlreiche Vorteile gegenüber der Speicherung von Daten in separaten Dateien. Erstens gewährleisten relationale Datenbanken eine höhere Datenintegrität und Konsistenz, da sie Beziehungen zwischen Tabellen definieren und Integritätsbedingungen festlegen können. Dies hilft dabei, Dateninkonsistenzen und Fehler zu vermeiden, die bei der Speicherung von Daten in separaten Dateien auftreten können.
 
-Relationale Datenbanken bieten auch die Möglichkeit, komplexe Datenabfragen durchzuführen, um spezifische Daten zu finden und zu analysieren. Mithilfe von SQL-Abfragen können Benutzer Daten einfach filtern, sortieren und gruppieren, um schnell Informationen zu finden und Trends zu erkennen.
+Zweitens ermöglichen relationale Datenbanken effiziente und flexible Datenabfragen mithilfe der Structured Query Language (SQL). Durch den Einsatz von SQL können komplexe Abfragen erstellt werden, um Daten aus mehreren Tabellen zu kombinieren, zu filtern und zu sortieren, ohne die gesamten Datensätze laden zu müssen. Dies verbessert die Leistung und Geschwindigkeit bei der Arbeit mit großen Datensätzen erheblich.
 
-Darüber hinaus bieten relationale Datenbanken verschiedene Funktionen zur Datensicherheit, wie beispielsweise die Einschränkung von Zugriffsrechten auf Tabellen und Spalten. Dies trägt dazu bei, dass sensible Daten nur von autorisierten Personen eingesehen und bearbeitet werden können, um Datenschutz- und Compliance-Anforderungen zu erfüllen.
+Drittens sind relationale Datenbankmanagementsysteme (RDBMS) für die Verarbeitung großer Datenmengen optimiert und bieten eine bessere Skalierbarkeit als Dateibasierte Systeme. RDBMS verwenden effiziente Speicherstrukturen, Caching-Mechanismen und Indexierung, um die Leistung bei der Datenspeicherung, -abfrage und -aktualisierung zu verbessern. Dies ist besonders wichtig, wenn die Menge der gespeicherten Daten zunimmt oder wenn mehrere Benutzer gleichzeitig auf die Daten zugreifen müssen.
 
+Viertens ermöglichen relationale Datenbanken eine robuste Datenzugriffssteuerung und Sicherheit, um sicherzustellen, dass die Daten geschützt sind. Man kann Berechtigungen auf Benutzer- oder Gruppenebene vergeben und den Zugriff auf bestimmte Tabellen, Datensätze oder Funktionen einschränken. Darüber hinaus bieten RDBMS Sicherheitsfunktionen wie Verschlüsselung, Auditing und Backup-Möglichkeiten, um die Sicherheit und Verfügbarkeit der Daten zu gewährleisten.
 
-![Entityrelations-Diagramm](entityrelationsdiagram.png)
+![Entityrelations-Diagramm](Additional_Files/ER-Diagram.jpeg)
 
 ## Task 3
-```{r}
-Zulassungen_aller_Fahrzeuge <- read_csv2("./Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
+```{r,message=FALSE,warning=FALSE}
+Zulassungen_aller_Fahrzeuge <- read_csv2("Data/Zulassungen/Zulassungen_alle_Fahrzeuge.csv")
 types = sapply(Zulassungen_aller_Fahrzeuge, typeof)
 attributes = names(Zulassungen_aller_Fahrzeuge)
 datatypes = data.frame(attributes, types)
@@ -170,46 +210,33 @@ kable(datatypes, row.names = FALSE, caption="Attribute der Datentypen", format="
 ```
 
 
-
-
-
 ## Task 4
-```{r, message=FALSE}
-if(!require("install.load")){
-  install.packages("install.load")
-}
-library(install.load)
-
-install_load("readr", "dplyr", "ggplot2", "plotly", "knitr", "purrr", "moments","tidyverse", "scales")
-```
-
 
 Der Datensatz wird eingelesen.
-```{r}
-fehleranalyse <- read.csv("Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv")
+```{r,message=FALSE,warning=FALSE}
+fehleranalyse <- read.csv("Data/Fahrzeug/Fahrzeuge_OEM1_Typ11_Fehleranalyse.csv")
 
 ```
 
 Aus ID_Fahrzeug wird eine Zählvariable namens ID erstellt (damit man daraus eine zeitliche Reihenfolge ableiten kann). 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 fehleranalyse <- fehleranalyse %>% mutate(ID = as.numeric(substr(ID_Fahrzeug, 9, nchar(ID_Fahrzeug))))
 ```
 
 Um ein Modell erstellen zu können, müssen die Werte, die engine annehmen kann, in numerische Werte umgewandelt werden (sie werden Dummyvariablen zugeordnet).
-```{r}
+```{r,message=FALSE,warning=FALSE}
 fehleranalyse$engine <- ifelse(fehleranalyse$engine == "small", 0, 
                     ifelse(fehleranalyse$engine == "medium", 1, 2))
 ```
 
-
 Fehlerhaft_Fahrleistung wird ins Verhältnis zu den anderen Variablen gesetzt. X1 wird als Relikt des Zusammenführens der Datensätze nicht berücksichtigt. Die Datumsangaben werden dabei ebenfalls nicht berücksichtigt, eine zeitliche Einordung wird anhand der ID_Fahrzeug (jetzt: ID) gemacht; je höher die ID, desto später wurde es produziert. Die Herstellernummer wird weggelassen, da nur ein Hersteller (Hersteller 1) im Datensatz dazu existiert. Es bleiben engine (mit Dummyvariablen), Werksnummer, fuel, days und ID_Fahrzeug (umgewandelt zur ID)
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 lm_fahrleistung <- lm(Fehlerhaft_Fahrleistung ~ engine + Werksnummer + fuel + days + ID, data = fehleranalyse )
 
 ```
 Mit summary() kann man sich die wichtigsten Kennzahlen anzeigen lassen.
-```{r}
+```{r,message=FALSE,warning=FALSE}
 summary(lm_fahrleistung)
 ```
 Der Koeffizient für "engine" hat einen Wert von -4.713e+03 mit einem Standardfehler von 9.134e+01. Der t-Wert beträgt -51.596 und der p-Wert ist kleiner als 0,001, was bedeutet, dass der Koeffizient für "engine" signifikant von Null verschieden ist und somit einen wichtigen Beitrag zur Erklärung der abhängigen Variable leistet.
@@ -225,13 +252,13 @@ Der Koeffizient für "ID" hat einen Wert von -2.059e-04 mit einem Standardfehler
 Die relevanten Werte sind somit die Koeffizienten für "engine", "fuel" und "ID", da sie signifikant von Null verschieden sind und somit einen Einfluss auf die abhängige Variable haben. Der Koeffizient für "Werksnummer" und "days" sind nicht signifikant, was bedeutet, dass sie keinen Einfluss auf die abhängige Variable haben, daher werden sie im nächsten Run eliminiert.
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 lm_fahrleistung2 <- lm(Fehlerhaft_Fahrleistung ~ engine + fuel + ID
                        , data = fehleranalyse )
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 summary(lm_fahrleistung2)
 ```
 
@@ -246,7 +273,7 @@ Dies wird mit dem Pearson-Korrelationskoeffizienten überprüft.
 
 
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 correlation_coefficient <- cor(fehleranalyse$fuel, fehleranalyse$engine)
 
 
@@ -257,12 +284,12 @@ Ein Pearson-Korrelationskoeffizient von 0.818 zeigt eine starke positive Korrela
 
 Im vorherigen Durchgang wies fuel mit einem T-Wert von 287.404 die stärksten Verbundenheit mit Fehlerhaft_Fahrleistung auf, daher folgt ein Durchgang nur mit der ID und fuel als stärker eingehende der beiden abhängigen Variablen.
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 lm_fahrleistung3 <- lm(Fehlerhaft_Fahrleistung ~ ID + fuel, data = fehleranalyse )
 
 ```
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 summary(lm_fahrleistung3)
 ```
 Variante ohne engine:
@@ -279,10 +306,6 @@ F-Statistik: 6.155e+04, p-Wert: < 2.2e-16
 
 Ein niedrigerer RSE-Wert zeigt ein besseres Modell an. In diesem Fall hat die Variante mit engine (RSE: 11160) einen niedrigeren RSE-Wert als Variante ohne engine (RSE: 11230), was darauf hindeutet, dass Variante 2 besser ist.
 Ein höherer Adjusted R-squared-Wert zeigt ein besseres Modell an. Variante mit enginge hat einen Adjusted R-squared-Wert von 0.4825, während Variante ohne engine einen Wert von 0.4755 hat. Daher ist Variante mit engine besser in Bezug auf die Anpassung an die Daten.Beide Modelle haben einen sehr niedrigen p-Wert (< 2.2e-16), was darauf hindeutet, dass die Modelle statistisch signifikant sind. In diesem Fall ist die F-Statistik allein nicht aussagekräftig genug, um die Modelle zu vergleichen. Insgesamt kann also festgestellt werden, dass das lineare Regressionsmodell mit diesen drei Parametern am geeignetsten ist, um einen Zusammenhang zu der Fahrleistung herzustellen.
-
-
-
-
 
 Zusammenfassend deutet die Analyse darauf hin, dass das Modell eine gute Erklärungskraft für die abhängige Variable hat und die unabhängigen Variablen signifikante Beiträge zur Erklärung der Variation der abhängigen Variable liefern. Die Residuen deuten jedoch darauf hin, dass das Modell möglicherweise noch verbessert werden kann, dafür benötigte es ein komplizierteres Modell oder neue Daten.
 
