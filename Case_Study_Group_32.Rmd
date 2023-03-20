@@ -960,19 +960,37 @@ glimpse(part_T01)
 ```
 
 
-## Generation of the Final Dataset
+## Final Dataset
+
+### Creation of the Final Dataset
 
 After all of the 41 datasets were imported and cleaned the next step is to merge them into one final dataframe containing all relevant data. This was archived through an incremental process which generally proceeds as follows: Related dataframes were joined and than the resulting dataframe was cleaned again. 
 
 First the dataframes of the individual vehicle types ("vehicle_type11" and "vehicle_type12") which have identical columns were combined by row using the base function *rbind()*. In order to distinguish between the different both vehicle types, a column containing the vehicle type was added to both dataframes beforehand in the data cleaning phase. The resulting dataframe is called "all_vehicles".  
 Similarly, both dataframes containing the information about which specific components are installed in which vehicle ("components_in_vehicle_type11" and "components_in_vehicle_type12") were combined by row into a dataframe called "all_components_in_vehicles".
 
-Afterwards the dataframe "all_components_in_vehicles" was joined with the dataframes of the individual components such as "component_K1BE1" using dplyr's *left_join()* function. As described above the dataframes of the individual components contain only components which are marked as defective. A left join was chosen here because all of the components in the "all_components_in_vehicles" dataframe including components which are not marked as defective are needed because they might include individual parts which indeed are marked as defective. After joining the dataframes the resulting dataframe also called "all_components_in_vehicles" was cleaned again. Due to the joins it contained a component_XY_failure column and a component_XY_failure_date column for each individual component. As we are not interested in which specific component caused a field-failure, the component_XY_failure columns were combined into a single column called "component_failure" telling the user if at least one of the components in a specific vehicle is marked as defective. Additionally, the component_XY_failure_date columns containing the dates of a specific component failure were combined into a single column called "earliest_component_failure_date". In our analysis we are interested in the time it took until a vehicle became a field-failure. If for example multiple components within one vehicle failed, we are only interested in the timespan between the production data and the first component failure. Once the first failure occurred we are not interested in any component failure following. Finally, columns which are now redundant (e.g. component_K2LE1_failure, component_K2LE1_failure_date) were removed and the order of the remaining columns was rearranged.      
+Afterwards the dataframe "all_components_in_vehicles" was joined with all dataframes of the individual components such as "component_K1BE1" using dplyr's *left_join()* function. As described above the dataframes of the individual components contain only components which are marked as defective. A left join was chosen here because all of the components in the "all_components_in_vehicles" dataframe including components which are not marked as defective are needed because they might include individual parts which indeed are marked as defective. After joining the dataframes the resulting dataframe also called "all_components_in_vehicles" was cleaned again. Due to the joins it contained a "component_XY_failure" column and a "component_XY_failure_date" column for each individual component (e.g. "component_K4_failure" and "component_K4_failure_date"). As we are not interested in which specific component(s) caused a field-failure, the "component_XY_failure" columns were combined into a single column called "component_failure" telling the user if at least one of the components in a specific vehicle is marked as defective. Additionally, the "component_XY_failure_date" columns containing the dates of a specific component failure were combined into a single column called "earliest_component_failure_date". In our analysis we are interested in the time it took until a vehicle became a field-failure. If for example multiple components within one vehicle failed, we are only interested in the timespan between the production data and the first component failure. Once the first failure occurred we are not interested in any component failure following. Finally, columns which are now redundant (e.g. component_K2LE1_failure, component_K2LE1_failure_date) were removed and the order of the remaining columns was rearranged.      
 
-*Note: The column "component_failure" was created using the following command: mutate(component_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)). This statement adds up all numeric values within each row. As of now the only columns containing numeric values were in fact the columns of the specific failures such as "component_K1BE1_failure".* 
+*Note: The column "component_failure" was created using the following command:*
+*mutate(component_failure = rowSums(across(where(is.numeric)), na.rm = TRUE)).* 
+*This statement adds up all numeric values within each row. As of now the only columns containing numeric values were in fact the columns of the specific failures such as "component_K1BE1_failure".* 
 
-*Note: The column "earliest_component_failure_date" was added using the following command:   mutate(earliest_component_failure_date = pmin(component_K1BE1_failure_date, component_K1DI1_failure_date, component_K2LE1_failure_date, component_K2ST1_failure_date, component_K3AG1_failure_date, component_K3SG1_failure_date, component_K4_failure_date, component_K5_failure_date, na.rm = TRUE)). Fortunately the pmin() function works with dates of the format IDate as well.*
+*Note: The column "earliest_component_failure_date" was added using the following command:*
+*mutate(earliest_component_failure_date = pmin(component_K1BE1_failure_date, component_K1DI1_failure_date, component_K2LE1_failure_date, component_K2ST1_failure_date, component_K3AG1_failure_date, component_K3SG1_failure_date, component_K4_failure_date, component_K5_failure_date, na.rm = TRUE)).* 
+*Fortunately the pmin() function works with dates in the IDate format as well.*
 
+In the next step the dataframes "parts_in_component_XY" (e.g. "parts_in_component_K4") which contain the information which specific parts are installed in a specific component (e.g. K4 contains T30, T31 and T32) were joined with the datasets of the individual parts installed in the respective component. For example the dataframe "parts_in_component_K4" was joined with the dataframes of the individual parts included in the component K4 which are called "part_T30", "part_T31" and "part_T32". In order to keep all components including components which are not marked as defective in the "parts_in_component_XY" dataframes, *left_joins()* were applied here as well. Afterwards the resulting dataframes were cleaned again. In this context two new columns were added to each dataframe: "part_in_XY_failure" and "earliest_part_in_XY_failure_date" (e.g. "part_in_K4_failure" and "earliest_part_in_K4_failure_date"). These columns were added using the same commands and same logic applied in the "all_components_in_vehicles" dataframe which we explained above. In this case we are also only interested in knowing if at least one individual part within a component failed ("part_in_XY_failure") and if at least one individual part failed when did the first failure occur ("earliest_part_in_XY_failure_date"). Afterwards columns which are not needed anymore were removed.   
+
+Up to now dataframe called "all_components_in_vehicles" containes for each vehicle the information about which componenets are installed (e.g. "id_engine"), if at least one of the components failed ("component_failure") and when the first component has failed ("earliest_component_failure_date"). In order to add all relevant information regarding the built-in individual parts, this dataframe was joined with the "parts_in_component_XY" dataframes (e.g. "parts_in_component_K4"). After the joins the resulting dataframe "all_components_in_vehicles" was further simplified. The columns "component_failure" and "part_in_XY_failure" were combined into a single column "part_or_component_failure". Here the same logic as above applies: We are not interested in knowing if a component or a installed part have failed. Instead we are only interested in knowing if at least one component or part has failed. Additionally, the column "earliest_part_or_component_failure_date" was introduced by combining the column "earliest_component_failure_date" with all of the columns containing the earliest failure data of a certain built-in part (e.g. "earliest_part_in_K4_failure_date"). Afterwards columns which are not needed anymore were removed.            
+ 
+In a last step the dataframes "all_vehicles" was joind with the dataframe "all_components_in_vehicles" and "oem_locations" using the *left_join()* function, further simplified as well as complemented with new columns. A *left_join()* was applied since we want to keep all vehicles including the ones in which no component or part has caused a failure in the "all_vehicles" dataframe. The column "field_failure" was added by combining the "vehicle_failure" and the "part_or_component_failure" column. In addition, the columns "vehicle_failure_date" and "earliest_part_or_component_failure_date" were combined into the "earliest_failure_date" column. Moreover, two columns which are relevant for our analysis of the vehicles quality were added. The column "vehicle_lifespan" contains the timespan [in days] between the production date and date on which the vehicle was marked as defective. The "time_till_first_failure" column on the other hand contains the timespan [in days] between the production date and the date of the first failure (= failure of the vehicle itself **or** a built-in component **or** a built-in part). Additionally, columns such as "field_failure" which contain categorical data and have not been set to factors in the Data Cleaning chapter were converted into factors. Finally, due to reasons of clarity the order of columns was rearranged.                     
+
+*Note: The "vehicle_lifespan" column as well as the "time_till_first_failure" column were both added using a combination of the difftime() and as.numeric() function. Additionally, a if_else() statement was added to ensure that the "vehicle_lifespan" column remained empty (NA) in case the vehicle itself was not marked as defective and the "time_till_first_failure" column remained empty if no field-failure occurred at all.*
+*The following command added the "time_till_first_failure" column: *
+*'mutate(time_till_first_failure = if_else(field_failure == 1, as.numeric(difftime(earliest_failure_date, vehicle_production_date)), NA))'*
+
+The final dataframe called "final_data" has the following structure: 
+ 
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
 # Combining all vehicles in one dataframe 
 all_vehicles <- rbind(vehicle_type11, vehicle_type12)
@@ -1141,20 +1159,25 @@ final_data <- final_data %>%
   left_join(oem_locations, by = "plant") %>% 
   mutate(time_till_first_failure = if_else(field_failure == 1, as.numeric(difftime(earliest_failure_date, vehicle_production_date)), NA)) %>%
   relocate(id_vehicle, vehicle_type, plant, location, latitude, longitude, vehicle_production_date, vehicle_failure, vehicle_failure_date, vehicle_lifespan, field_failure, earliest_failure_date, time_till_first_failure) 
+
+# Overview over structure of final dataframe
+glimpse(final_data)
 ```
 
-...
+In order to incorperate the "final_data" dataframe into our shiny application, the dataframe is exported as .csv file using the *fwrite()* function from the "data.table" package.  
 
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
 # Exporting the final dataframe as .csv file
 fwrite(final_data, file ="Final_dataset_group_32.csv")
 ```
 
+### Presentation of the Final Dataset
+
 ... 
 
 ```{r, message=FALSE, warning = FALSE, cache = TRUE}
 # Overview over the final dataframe
-datatable(final_data %>% sample_n(200) , caption = "Final Dataset", colnames = c("Vehicle ID" = "id_vehicle", "Vehicle Type" = "vehicle_type", "Manufacturing Plant" = "plant", "Location" = "location", "Latitude" = "latitude", "Longitude" = "longitude", "Production date" = "vehicle_production_date", "Vehicle Failure" = "vehicle_failure", "Vehicle Failure Date" = "vehicle_failure_date", "Vehicle Lifespan" = "vehicle_lifespan", "Field-Failure" = "is_failure", "Earliest Failure Date" = "earliest_failure_date", "Time till first Failure" = "time_till_first_failure"))
+datatable(final_data %>% sample_n(200), caption = "Final Dataset", colnames = c("Vehicle ID" = "id_vehicle", "Vehicle Type" = "vehicle_type", "Manufacturing Plant" = "plant", "Location" = "location", "Latitude" = "latitude", "Longitude" = "longitude", "Production date" = "vehicle_production_date", "Vehicle Failure" = "vehicle_failure", "Vehicle Failure Date" = "vehicle_failure_date", "Vehicle Lifespan" = "vehicle_lifespan", "Field-Failure" = "field_failure", "Earliest Failure Date" = "earliest_failure_date", "Time till first Failure" = "time_till_first_failure"))
 ```
 
 
